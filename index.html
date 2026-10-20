@@ -1,0 +1,889 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Cuerpo Ares</title>
+<meta name="theme-color" content="#0A0C11">
+<meta name="description" content="Calorías por foto, nutrientes, sueño, ejercicio y hábitos hormonales.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: app de celular oscura — barra superior con fecha, pantallas por pestaña, barra inferior con cámara al centro.
+   Un solo look oscuro a propósito (app nocturna de salud), con colores fijos por métrica. */
+:root{
+  color-scheme:dark;
+  --bg:#0A0C11; --surface:#141822; --surface2:#1B2130; --line:#252C3C; --ink:#F2F4F9; --muted:#8B94A8;
+  --kcal:#FF7A45; --prot:#38D99A; --sleep:#8B8CFF; --horm:#F4C34A; --water:#4CB8FF; --bad:#FF5D6C;
+  --night1:#1A1B4B; --night2:#0B0D22;
+  --f-display:"Unbounded", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Manrope", "Segoe UI", system-ui, sans-serif;
+  --tabbar:72px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+img{max-width:100%}
+:root{padding-top:env(safe-area-inset-top,0px)}
+html,body{background:var(--bg)}
+body{margin:0;color:var(--ink);font:15px/1.5 var(--f-body);font-variant-numeric:tabular-nums;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0 calc(var(--tabbar) + 28px + env(safe-area-inset-bottom,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.app{max-width:560px;margin:0 auto}
+h1,h2,h3{margin:0;text-wrap:balance}
+h2{font-family:var(--f-display);font-size:22px;font-weight:700;letter-spacing:-.01em}
+h3{font-size:15px;font-weight:700}
+.disp{font-family:var(--f-display);font-weight:700;letter-spacing:-.02em}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.label{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:700}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:var(--surface2);border-radius:12px;padding:9px 14px;font-weight:600}
+button:disabled{opacity:.45;cursor:default}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,label:focus-within{outline:2px solid var(--sleep);outline-offset:2px}
+input,select,textarea{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0;width:100%}
+input::placeholder,textarea::placeholder{color:var(--muted)}
+.btn-main{background:var(--kcal);color:#1A0D06;font-weight:800}
+.btn-ghost{background:transparent;border:1px solid var(--line)}
+
+/* barra superior */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;background:var(--bg);display:flex;align-items:center;justify-content:space-between;gap:10px;padding-block:14px 10px}
+.brand{display:flex;align-items:center;gap:10px}
+.mark{width:34px;height:34px;border-radius:10px;background:conic-gradient(from 200deg,var(--kcal),var(--horm),var(--prot),var(--sleep),var(--kcal));display:grid;place-items:center}
+.mark::after{content:"";width:16px;height:16px;border-radius:50%;background:var(--bg)}
+.brand b{font-family:var(--f-display);font-size:15px;letter-spacing:-.01em}
+.brand span{display:block;font-size:11px;color:var(--muted)}
+.datepill{display:flex;align-items:center;background:var(--surface);border-radius:99px;padding:3px}
+.datepill button{background:transparent;padding:6px 10px;border-radius:99px}
+.datepill .d{font-weight:700;font-size:13px;padding:0 4px;white-space:nowrap}
+.avatar{width:36px;height:36px;border-radius:50%;padding:0;display:grid;place-items:center;background:var(--surface)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--muted);display:inline-block}
+.dot.on{background:var(--prot)}
+
+.screen{display:grid;gap:14px;padding-top:6px}
+.card{background:var(--surface);border-radius:20px;padding:18px;display:grid;gap:14px;min-width:0}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.between{justify-content:space-between}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field{display:grid;gap:5px;min-width:0}
+
+/* anillos */
+.rings{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
+@media (max-width:380px){.rings{grid-template-columns:1fr;justify-items:center}}
+.rings svg{width:168px;height:168px;display:block}
+.legend{display:grid;gap:12px;width:100%}
+.lg{display:grid;gap:2px}
+.lg .v{font-size:20px;font-weight:800}
+.lg .v small{font-size:13px;color:var(--muted);font-weight:600}
+.lg .k{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.07em}
+.sw{width:9px;height:9px;border-radius:3px;flex:none}
+.ring-anim{transition:stroke-dashoffset .6s cubic-bezier(.2,.8,.2,1)}
+@media (prefers-reduced-motion:reduce){.ring-anim{transition:none}}
+
+/* puntaje hormonal */
+.gauge{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center}
+.gauge svg{width:110px;height:64px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.hchip{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:6px 10px;border-radius:99px;background:var(--surface2);color:var(--muted)}
+.hchip i{width:7px;height:7px;border-radius:50%;background:var(--line)}
+.hchip.on{color:var(--ink)} .hchip.on i{background:var(--prot)}
+.hchip.part{color:var(--ink)} .hchip.part i{background:var(--horm)}
+
+/* entrenador */
+.coach{background:linear-gradient(var(--surface),var(--surface)) padding-box,linear-gradient(135deg,var(--kcal),var(--sleep)) border-box;border:1.5px solid transparent}
+.advice{white-space:pre-wrap;line-height:1.65;font-size:14.5px}
+.advice:empty{display:none}
+
+/* agua */
+.water{display:flex;gap:6px;flex-wrap:wrap}
+.glass{width:26px;height:34px;border-radius:4px 4px 8px 8px;border:2px solid var(--line);background:transparent;padding:0;position:relative;overflow:hidden}
+.glass.full{border-color:var(--water);background:linear-gradient(to top,var(--water) 75%,transparent 75%)}
+
+/* comida */
+.snapbox{display:grid;gap:10px}
+.found{display:grid;gap:10px}
+.found .ph{width:100%;max-height:220px;object-fit:cover;border-radius:14px}
+.fitem{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.fitem:last-child{border-bottom:0}
+.fitem button{background:transparent;color:var(--muted);padding:4px 8px}
+.donut{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
+.donut svg{width:120px;height:120px}
+.mbar{display:grid;gap:4px}
+.mbar .top2{display:flex;justify-content:space-between;font-size:13px;font-weight:600}
+.bar{height:8px;border-radius:9px;background:var(--surface2);overflow:hidden}
+.bar>i{display:block;height:100%;border-radius:9px;width:0;transition:width .5s}
+@media (prefers-reduced-motion:reduce){.bar>i{transition:none}}
+.meal{display:grid;grid-template-columns:auto 1fr auto auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.meal:last-child{border-bottom:0}
+.meal .ic{width:38px;height:38px;border-radius:12px;background:var(--surface2);display:grid;place-items:center;font-weight:800;font-size:14px;color:var(--kcal)}
+.meal .nm{font-weight:600;min-width:0;overflow-wrap:anywhere}
+.meal .sub{font-size:12px;color:var(--muted)}
+.meal .kc{font-weight:800}
+.meal button{background:transparent;color:var(--muted);padding:4px 6px}
+.qchips{display:flex;flex-wrap:wrap;gap:6px}
+.qchip{font-size:13px;padding:7px 11px;border-radius:99px;background:var(--surface2);font-weight:600}
+.qchip b{color:var(--kcal);font-weight:700;margin-left:4px}
+details summary{cursor:pointer;font-weight:700;list-style:none}
+details summary::-webkit-details-marker{display:none}
+details summary::after{content:" +";color:var(--muted)}
+details[open] summary::after{content:" −"}
+.nut{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px 18px}
+.empty{padding:16px;border:1.5px dashed var(--line);border-radius:14px;color:var(--muted);font-size:14px;text-align:center}
+.tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:2px 7px;border-radius:99px;background:var(--surface2);color:var(--sleep);margin-left:6px;vertical-align:1px}
+
+/* sueño */
+.night{background:radial-gradient(120% 90% at 85% 0%,#3A2F7A 0%,transparent 55%),linear-gradient(160deg,var(--night1),var(--night2));position:relative;overflow:hidden}
+.night::before{content:"";position:absolute;inset:0;background-image:radial-gradient(1.2px 1.2px at 12% 22%,#fff8,transparent),radial-gradient(1px 1px at 72% 14%,#fff7,transparent),radial-gradient(1.4px 1.4px at 88% 48%,#fff6,transparent),radial-gradient(1px 1px at 34% 62%,#fff5,transparent),radial-gradient(1.2px 1.2px at 58% 36%,#fff6,transparent);pointer-events:none}
+.night > *{position:relative}
+.bigh{font-size:54px;line-height:1}
+.bigh small{font-size:20px;color:var(--muted)}
+.scale{display:flex;gap:6px}
+.scale button{flex:1;min-width:34px;padding:8px 0;background:var(--surface2)}
+.scale button[aria-pressed=true]{background:var(--sleep);color:#0B0D22}
+.night .scale button{background:#ffffff14}
+.night .scale button[aria-pressed=true]{background:var(--sleep)}
+.night input{background:#ffffff12;border-color:#ffffff22}
+.bars{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;align-items:end;height:140px;position:relative}
+.bars .c{display:grid;align-items:end;height:100%}
+.bars .c i{display:block;border-radius:8px 8px 4px 4px;min-height:4px;background:linear-gradient(to top,var(--c1),var(--c2))}
+.bars .t{position:absolute;left:0;right:0;border-top:1.5px dashed #ffffff55;pointer-events:none}
+.bars .t span{position:absolute;right:0;top:-18px;font-size:10px;color:var(--muted);font-weight:700}
+.bx{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;text-align:center;font-size:11px;color:var(--muted);font-weight:600}
+.bx b{display:block;color:var(--ink);font-size:11px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:var(--surface2);border-radius:14px;padding:12px 14px;display:grid;gap:2px}
+.stat .v{font-size:20px;font-weight:800}
+.tchips{display:flex;gap:8px;flex-wrap:wrap}
+.tchip{background:var(--surface2);border-radius:14px;padding:10px 14px;display:grid;gap:0}
+.tchip b{font-size:18px}
+.tchip.best{background:var(--sleep);color:#0B0D22}
+.tchip.best span{color:#0B0D22aa}
+
+/* cuerpo */
+.pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{padding:8px 12px;border-radius:99px;background:var(--surface2);font-size:13px}
+.pill[aria-pressed=true]{background:var(--prot);color:#06170F}
+.switch{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 0;cursor:pointer}
+.switch input{appearance:none;width:46px;height:28px;border-radius:99px;background:var(--surface2);border:1px solid var(--line);position:relative;padding:0;flex:none;cursor:pointer}
+.switch input::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--muted);transition:left .2s}
+.switch input:checked{background:var(--bad);border-color:var(--bad)}
+.switch input:checked::after{left:21px;background:#fff}
+.chart svg{width:100%;height:auto;display:block}
+.labs table{width:100%;border-collapse:collapse;font-size:14px}
+.labs td,.labs th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+.labs th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.labs td button{background:transparent;color:var(--muted);padding:2px 6px}
+.tablewrap{overflow-x:auto}
+.note{font-size:12.5px;color:var(--muted);margin:0;max-width:65ch}
+.ok{color:var(--prot)}.warn{color:var(--horm)}.bad{color:var(--bad)}
+textarea{min-height:70px;resize:vertical}
+
+/* barra de pestañas */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:8;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);
+  padding:6px max(10px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px))}
+.tabs{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);align-items:center}
+.tab{background:transparent;display:grid;justify-items:center;gap:2px;padding:6px 0;font-size:11px;font-weight:700;color:var(--muted);border-radius:12px}
+.tab svg{width:22px;height:22px}
+.tab[aria-current=page]{color:var(--ink)}
+.tab[aria-current=page] svg{color:var(--kcal)}
+.camtab{justify-self:center;width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--kcal),#FF4F7B);display:grid;place-items:center;margin-top:-26px;box-shadow:0 8px 24px #FF6A4A55;cursor:pointer;position:relative}
+.camtab.off{filter:grayscale(1);opacity:.5;cursor:default}
+.camtab svg{width:26px;height:26px;color:#fff}
+.camtab input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.status{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.install{background:linear-gradient(135deg,var(--kcal),#FF4F7B);color:#fff}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="top">
+    <div class="brand"><div class="mark" aria-hidden="true"></div><div><b>Cuerpo Ares</b><span class="status"><i class="dot" id="statusDot"></i><span id="status">Conectando…</span></span></div></div>
+    <div class="row" style="gap:8px">
+      <div class="datepill">
+        <button id="prev" aria-label="Día anterior">‹</button>
+        <span class="d" id="dateLbl">Hoy</span>
+        <button id="next" aria-label="Día siguiente">›</button>
+      </div>
+      <button class="avatar" id="toYo" aria-label="Perfil y exámenes">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- HOY -->
+  <main class="screen" id="s-hoy">
+    <div class="card">
+      <div class="row between"><h2 id="hello">Tu día</h2><span class="small muted" id="dateLong"></span></div>
+      <div class="rings">
+        <svg viewBox="0 0 168 168" id="ringsSvg" role="img" aria-label="Anillos de calorías, proteína y sueño"></svg>
+        <div class="legend" id="legend"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="gauge">
+        <svg viewBox="0 0 110 64" id="gaugeSvg" aria-hidden="true"></svg>
+        <div><div class="label">Hábitos hormonales</div><div class="disp" style="font-size:28px" id="scoreV">0</div><div class="small muted" id="scoreL"></div></div>
+      </div>
+      <div class="chips" id="hchips"></div>
+    </div>
+
+    <div class="card coach">
+      <div class="row between"><h3>Tu entrenador</h3><span class="small muted">con Gemini</span></div>
+      <p class="note">Lee todo tu día y te dice qué comer en lo que queda, la rutina de hoy, a qué hora dormir y qué hábito mejorar.</p>
+      <div class="advice" id="advice"></div>
+      <div class="row"><button class="btn-main" id="coachBtn" disabled>Pedir consejo de hoy</button><button class="btn-ghost" id="coachStop" hidden>Parar</button></div>
+    </div>
+
+    <div class="card">
+      <div class="row between"><h3>Agua</h3><span class="small muted"><b id="waterN">0</b> de 8 vasos</span></div>
+      <div class="water" id="water"></div>
+    </div>
+  </main>
+
+  <!-- COMIDA -->
+  <main class="screen" id="s-comida" hidden>
+    <h2>Comida</h2>
+    <div class="card snapbox">
+      <div id="analysis" hidden></div>
+      <form class="row" id="sayForm" style="flex-wrap:nowrap">
+        <input id="hint" placeholder="Escribe: 2 huevos y una arepa con queso">
+        <button type="submit" class="btn-main" id="sayBtn" disabled>Calcular</button>
+      </form>
+      <p class="note" id="camNote">O toca la cámara de abajo. Si escribes algo antes de la foto, se usa como detalle del plato.</p>
+    </div>
+
+    <div class="card">
+      <div class="donut">
+        <svg viewBox="0 0 120 120" id="donutSvg" aria-hidden="true"></svg>
+        <div class="legend" id="macros"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row between"><h3>Lo que comiste</h3><span class="small muted" id="mealsSum"></span></div>
+      <div id="meals"></div>
+      <details>
+        <summary>Agregar rápido</summary>
+        <div class="qchips" id="quick" style="margin-top:12px"></div>
+        <p class="note" style="margin-top:8px">Porciones típicas, valores aproximados.</p>
+      </details>
+      <details>
+        <summary>Agregar a mano</summary>
+        <form class="grid2" id="mealForm" style="margin-top:12px">
+          <input id="mName" placeholder="Qué comiste" required style="grid-column:1/-1">
+          <input id="mKcal" type="number" min="0" placeholder="Calorías" required>
+          <input id="mProt" type="number" min="0" step="0.5" placeholder="Proteína (g)">
+          <button class="btn-main" type="submit" style="grid-column:1/-1">Agregar</button>
+        </form>
+      </details>
+    </div>
+
+    <div class="card">
+      <div class="row between"><h3>Vitaminas y minerales</h3><span class="small" id="nutrScore"></span></div>
+      <div id="nutr" style="display:grid;gap:18px"></div>
+      <p class="note">Zinc, magnesio, vitamina D y omega-3 son los que más pesan en la testosterona. La foto y el texto traen todos los nutrientes; las porciones rápidas solo algunos.</p>
+    </div>
+  </main>
+
+  <!-- SUEÑO -->
+  <main class="screen" id="s-sueno" hidden>
+    <h2>Sueño</h2>
+    <div class="card night">
+      <div class="label" style="color:#C9CBFF">Anoche</div>
+      <div class="disp bigh" id="sleepBig">—</div>
+      <div class="small" id="sleepMsg" style="color:#C9CBFF"></div>
+      <div class="grid2">
+        <label class="field"><span class="label" style="color:#C9CBFF">Me acosté</span><input type="time" id="bed"></label>
+        <label class="field"><span class="label" style="color:#C9CBFF">Me levanté</span><input type="time" id="wake"></label>
+      </div>
+      <div class="field"><span class="label" style="color:#C9CBFF">Cómo dormí</span><div class="scale" id="sleepQ"></div></div>
+    </div>
+
+    <div class="card">
+      <div class="row between"><h3>Últimos 7 días</h3><span class="small muted">horas por noche</span></div>
+      <div class="bars" id="sleepBars" style="--c1:#5B5CE0;--c2:var(--sleep)"></div>
+      <div class="bx" id="sleepBx"></div>
+      <div class="stats" id="sleepStats"></div>
+    </div>
+
+    <div class="card">
+      <h3>¿A qué hora me acuesto?</h3>
+      <p class="note">Cada ciclo de sueño dura unos 90 minutos. Despertarte al final de un ciclo se siente mejor. Ya suma 15 minutos para quedarte dormido.</p>
+      <label class="field" style="max-width:200px"><span class="label">Me quiero levantar a las</span><input type="time" id="wakeGoal"></label>
+      <div class="tchips" id="cycles"></div>
+    </div>
+  </main>
+
+  <!-- CUERPO -->
+  <main class="screen" id="s-cuerpo" hidden>
+    <h2>Cuerpo</h2>
+    <div class="card">
+      <h3>Ejercicio de hoy</h3>
+      <div class="pills" id="exPills"></div>
+      <div class="grid2">
+        <label class="field"><span class="label">Minutos</span><input type="number" id="exMin" min="0"></label>
+        <label class="field"><span class="label">Pasos</span><input type="number" id="steps" min="0"></label>
+      </div>
+      <label class="field"><span class="label">Qué hiciste</span><input id="trainType" placeholder="Pecho y tríceps, 4×10…"></label>
+    </div>
+
+    <div class="card">
+      <h3>Hormonas y hábitos</h3>
+      <div class="grid2">
+        <label class="field"><span class="label">Sol directo (min)</span><input type="number" id="sun" min="0"></label>
+        <div class="field"><span class="label">&nbsp;</span><label class="switch"><span>Tomé alcohol</span><input type="checkbox" id="alcohol"></label></div>
+      </div>
+      <div class="field"><span class="label">Energía</span><div class="scale" id="energy"></div></div>
+      <div class="field"><span class="label">Ánimo</span><div class="scale" id="mood"></div></div>
+      <div class="field"><span class="label">Ansiedad</span><div class="scale" id="anxiety"></div></div>
+      <div class="field"><span class="label">Libido</span><div class="scale" id="libido"></div></div>
+      <p class="note">Ninguna app mide hormonas: eso lo dice un examen de sangre. Aquí se miden los hábitos que las mueven.</p>
+    </div>
+
+    <div class="card">
+      <div class="row between"><h3>Peso</h3><span class="small" id="weightMsg"></span></div>
+      <label class="field" style="max-width:180px"><span class="label">Peso hoy (kg)</span><input type="number" id="weight" min="30" step="0.1"></label>
+      <div class="chart" id="wChart"></div>
+    </div>
+
+    <div class="card">
+      <h3>Notas del día</h3>
+      <textarea id="notes" placeholder="Cómo te sentiste, qué cambió…"></textarea>
+    </div>
+  </main>
+
+  <!-- YO -->
+  <main class="screen" id="s-yo" hidden>
+    <h2>Perfil y metas</h2>
+    <div class="card">
+      <div class="grid2">
+        <label class="field"><span class="label">Edad</span><input type="number" id="pAge" min="12" max="99"></label>
+        <label class="field"><span class="label">Estatura (cm)</span><input type="number" id="pHeight" min="120" max="230"></label>
+        <label class="field"><span class="label">Peso actual (kg)</span><input type="number" id="pWeight" min="30" step="0.1"></label>
+        <label class="field"><span class="label">Peso meta (kg)</span><input type="number" id="pGoalW" min="30" step="0.1"></label>
+        <label class="field"><span class="label">Sexo</span><select id="pSex"><option value="m">Hombre</option><option value="f">Mujer</option></select></label>
+        <label class="field"><span class="label">Meta de sueño (h)</span><input type="number" id="pSleep" min="5" max="12" step="0.5"></label>
+        <label class="field"><span class="label">Actividad</span><select id="pAct">
+          <option value="1.375">Liviana (1–3 días)</option><option value="1.55">Moderada (3–5 días)</option><option value="1.725">Alta (6–7 días)</option></select></label>
+        <label class="field"><span class="label">Objetivo</span><select id="pGoal">
+          <option value="ganar">Ganar músculo</option><option value="mantener">Mantener</option><option value="bajar">Bajar grasa</option></select></label>
+      </div>
+      <div id="targetsMsg" class="small"></div>
+    </div>
+
+    <h2>Ajustes</h2>
+    <div class="card" id="setup">
+      <button class="install" id="installBtn" hidden>Instalar como app en este celular</button>
+      <h3>Clave de Gemini (para leer fotos)</h3>
+      <p class="note">La app usa Gemini de Google, gratis, para leer tus fotos de comida y darte consejos. La clave se guarda solo en este celular.
+        Para sacarla: entra a <b>aistudio.google.com/apikey</b> con tu cuenta de Google, toca "Create API key" y pégala aquí.</p>
+      <form class="row" id="keyForm" style="flex-wrap:nowrap">
+        <input id="keyIn" type="password" autocomplete="off" placeholder="Pega tu clave aquí">
+        <button type="submit" class="btn-main">Guardar</button>
+      </form>
+      <div class="small" id="keyMsg"></div>
+      <h3>Tus datos</h3>
+      <p class="note">Todo queda guardado en este celular. Haz una copia de vez en cuando por si cambias de celular o borras la app.</p>
+      <div class="row">
+        <button class="btn-ghost" id="exportBtn">Copiar respaldo</button>
+        <button class="btn-ghost" id="importBtn">Restaurar respaldo</button>
+      </div>
+      <textarea id="backup" hidden placeholder="Pega aquí el respaldo y toca Restaurar"></textarea>
+      <div class="small" id="backupMsg"></div>
+    </div>
+
+    <h2>Exámenes de sangre</h2>
+    <div class="card labs">
+      <p class="note">Anota los resultados de tus exámenes (testosterona, vitamina D, TSH, glucosa, colesterol) con el rango de referencia del mismo laboratorio.</p>
+      <form class="grid2" id="labForm">
+        <input type="date" id="lDate" required>
+        <input id="lName" placeholder="Examen" required list="labNames">
+        <input id="lVal" placeholder="Valor" required>
+        <input id="lUnit" placeholder="Unidad (ng/dL…)">
+        <input id="lRef" placeholder="Rango de referencia" style="grid-column:1/-1">
+        <button class="btn-main" type="submit" style="grid-column:1/-1">Guardar examen</button>
+      </form>
+      <datalist id="labNames"><option>Testosterona total</option><option>Testosterona libre</option><option>Vitamina D</option><option>TSH</option><option>Glucosa en ayunas</option><option>Colesterol total</option><option>Triglicéridos</option><option>Cortisol</option></datalist>
+      <div id="labs"></div>
+    </div>
+    <p class="note">Herramienta de registro personal, no consejo médico. Las calorías de una foto son un cálculo aproximado. Si algo te preocupa, ve al médico con estos datos.</p>
+  </main>
+</div>
+
+<nav class="tabbar" aria-label="Secciones">
+  <div class="tabs">
+    <button class="tab" data-tab="hoy" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>Hoy</button>
+    <button class="tab" data-tab="comida"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 3v8a2 2 0 0 0 2 2v8M11 3v6M3 3v6a4 4 0 0 0 4 4"/><path d="M17 21V3c2.5 1 4 4 4 8h-4"/></svg>Comida</button>
+    <label class="camtab off" id="camTab" aria-label="Tomar foto de la comida">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h3l2-3h8l2 3h3v12H3z"/><circle cx="12" cy="13" r="4"/></svg>
+      <input type="file" id="photo" accept="image/*" capture="environment" disabled>
+    </label>
+    <button class="tab" data-tab="sueno"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>Sueño</button>
+    <button class="tab" data-tab="cuerpo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9v6M18 9v6M3 11v2M21 11v2M6 12h12"/></svg>Cuerpo</button>
+  </div>
+</nav>
+
+<script>
+// [nombre, kcal, prot, carb, grasa, fibra, zinc mg, magnesio mg, vit D µg] — porciones típicas, aproximadas
+const QUICK = [
+  ["Huevo",72,6,0.4,5,0,0.6,6,1.1],["Arepa blanca",150,3,32,1,2,0.5,25,0],["Arroz (1 taza)",205,4,45,0.4,0.6,0.8,19,0],
+  ["Pechuga 100 g",165,31,0,3.6,0,1,29,0.1],["Carne res 100 g",250,26,0,15,0,6,21,0.1],["Fríjoles (1 taza)",225,15,40,1,15,1.9,80,0],
+  ["Atún (lata)",130,29,0,1,0,0.8,35,1.5],["Leche (vaso)",150,8,12,8,0,1,27,1.2],["Avena 40 g",150,5,27,2.5,4,1.5,55,0],
+  ["Banano",105,1,27,0.4,3,0.2,32,0],["Papa mediana",130,3,30,0.2,2,0.4,30,0],["Pan (tajada)",75,2.5,14,1,0.7,0.2,7,0],
+  ["Aguacate (½)",120,1.5,6,11,5,0.6,20,0]
+];
+const QKEYS = ["kcal","prot","carb","fat","fiber","zinc","mag","vitD"];
+const NKEYS = ["kcal","prot","carb","fat","fiber","sugar","vitA","vitC","vitD","b12","folate","calcium","iron","mag","zinc","potassium","sodium","omega3"];
+// [nombre, clave, unidad, es límite máximo]
+const NGROUPS = [
+  ["Macros","var(--kcal)", [["Fibra","fiber","g"],["Azúcar","sugar","g",1],["Omega-3","omega3","g"]]],
+  ["Vitaminas","var(--horm)", [["Vitamina A","vitA","µg"],["Vitamina C","vitC","mg"],["Vitamina D","vitD","µg"],["Vitamina B12","b12","µg"],["Folato","folate","µg"]]],
+  ["Minerales","var(--water)", [["Calcio","calcium","mg"],["Hierro","iron","mg"],["Magnesio","mag","mg"],["Zinc","zinc","mg"],["Potasio","potassium","mg"],["Sodio","sodium","mg",1]]]
+];
+const EXTYPES = [["fuerza","Fuerza / pesas"],["futbol","Fútbol"],["cardio","Cardio"],["caminar","Caminar"],["descanso","Descanso"]];
+const SCALES = ["sleepQ","energy","mood","anxiety","libido"];
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2,"0");
+const iso = d => d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const shift = (s,n) => { const [y,m,d]=s.split("-").map(Number); return iso(new Date(y,m-1,d+n)); };
+const parse = s => { const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d); };
+const fmt = n => Math.round(n).toLocaleString("es-CO");
+const r1 = n => Math.round(n*10)/10;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+let cache = {}, cur = iso(new Date()), sample = null;
+const blankDay = () => ({meals:[],water:0,bed:"",wake:"",sleepQ:0,exType:"",exMin:null,trainType:"",sun:null,steps:null,alcohol:false,energy:0,mood:0,anxiety:0,libido:0,weight:null,notes:"",advice:""});
+const day = id => cache["d-"+(id||cur)];
+const getDay = () => cache["d-"+cur] || (cache["d-"+cur] = blankDay());
+const profile = () => cache.profile || (cache.profile = {age:null,height:183,weight:null,goalW:90,sex:"m",act:"1.55",goal:"ganar",sleep:9});
+const labs = () => cache.labs || (cache.labs = {items:[]});
+const isStrength = d => d.exType === "fuerza" || (!d.exType && d.train);
+
+/* ---------- guardado: todo en este celular ---------- */
+const KEY = "cuerpo-ares";
+const store = {
+  timer:null,
+  init(){
+    try { cache = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch { cache = {}; }
+    setStatus("Guardado en este celular", true); render();
+  },
+  save(){
+    clearTimeout(this.timer);
+    this.timer = setTimeout(() => {
+      try { localStorage.setItem(KEY, JSON.stringify(cache)); setStatus("Guardado en este celular", true); }
+      catch { setStatus("No se pudo guardar", false); }
+    }, 300);
+  }
+};
+window.addEventListener("pagehide", () => { try { localStorage.setItem(KEY, JSON.stringify(cache)); } catch {} });
+
+/* ---------- Gemini: la clave vive solo en este celular ---------- */
+const MODELS = ["gemini-2.5-flash","gemini-flash-latest","gemini-flash-lite-latest"];
+const ai = {
+  key(){ try { return localStorage.getItem(KEY+"-gemini") || ""; } catch { return ""; } },
+  async call(parts, json){
+    const key = this.key();
+    if (!key) throw {code:"no_key"};
+    if (!navigator.onLine) throw {code:"offline"};
+    let last = {code:"upstream_error"};
+    // si un modelo está saturado (429/503), prueba el siguiente
+    for (const m of MODELS) {
+      let r;
+      try {
+        r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {
+          method:"POST", headers:{"Content-Type":"application/json","x-goog-api-key":key},
+          body: JSON.stringify({contents:[{parts}], generationConfig: json ? {responseMimeType:"application/json"} : {}})
+        });
+      } catch { last = {code:"offline"}; continue; }
+      if (r.status === 400 || r.status === 401 || r.status === 403) {
+        const t = await r.text(); throw {code: /API.key|PERMISSION|API_KEY/i.test(t) ? "bad_key" : "upstream_error"};
+      }
+      if (!r.ok) { last = {code: r.status === 429 ? "rate_limited" : "upstream_error"}; continue; }
+      const data = await r.json();
+      const text = (data.candidates?.[0]?.content?.parts || []).filter(p => p.text && !p.thought).map(p => p.text).join("").trim();
+      if (!text) { last = {code:"empty"}; continue; }
+      if (!json) return text;
+      try { return JSON.parse(text.replace(/^```(json)?|```$/g, "").trim()); } catch { last = {code:"invalid_json"}; }
+    }
+    throw last;
+  },
+  json(prompt, image){ return image ? imagePart(image).then(p => this.call([{text:prompt}, p], true)) : this.call([{text:prompt}], true); },
+  text(prompt){ return this.call([{text:prompt}], false); }
+};
+// achica la foto a 1280 px para que suba rápido con datos móviles
+async function imagePart(file){
+  const bmp = await createImageBitmap(file);
+  const s = Math.min(1, 1280 / Math.max(bmp.width, bmp.height));
+  const c = document.createElement("canvas"); c.width = Math.round(bmp.width*s); c.height = Math.round(bmp.height*s);
+  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+  const b64 = c.toDataURL("image/jpeg", 0.82).split(",")[1];
+  return {inline_data:{mime_type:"image/jpeg", data:b64}};
+}
+const setStatus = (t, ok) => { $("status").textContent = t; $("statusDot").classList.toggle("on", !!ok); };
+const touchDay = () => { store.save(); render(); };
+
+/* ---------- cálculos ---------- */
+function targets(){
+  const p = profile();
+  if (!p.age || !p.height || !p.weight) return null;
+  const bmr = 10*p.weight + 6.25*p.height - 5*p.age + (p.sex === "f" ? -161 : 5);
+  const kcal = Math.round(bmr*Number(p.act) + {ganar:300, mantener:0, bajar:-400}[p.goal]);
+  const prot = Math.round(p.weight*(p.goal === "bajar" ? 2 : 1.8));
+  const fat = Math.round(kcal*0.28/9);
+  const f = p.sex === "f";
+  // metas diarias de referencia para adultos 19-30 años (IOM); azúcar y sodio son límites máximos
+  return { kcal, prot, fat, carb: Math.max(0, Math.round((kcal - prot*4 - fat*9)/4)), fiber: f ? 25 : 38, sugar: 50,
+           vitA: f ? 700 : 900, vitC: f ? 75 : 90, vitD: 15, b12: 2.4, folate: 400,
+           calcium: 1000, iron: f ? 18 : 8, mag: f ? 310 : 400, zinc: f ? 8 : 11, potassium: f ? 2600 : 3400, sodium: 2300,
+           omega3: f ? 1.1 : 1.6, sleep: Number(p.sleep)||9 };
+}
+const sleepGoal = t => t?.sleep || Number(profile().sleep) || 9;
+function sleepHours(d){
+  if (!d?.bed || !d?.wake) return null;
+  const [bh,bm] = d.bed.split(":").map(Number), [wh,wm] = d.wake.split(":").map(Number);
+  let h = (wh*60+wm - bh*60-bm)/60; if (h <= 0) h += 24; return h;
+}
+const totals = d => (d?.meals||[]).reduce((a,m) => { NKEYS.forEach(k => a[k] += +m[k]||0); return a; }, Object.fromEntries(NKEYS.map(k => [k,0])));
+function habits(d, t){
+  const tot = totals(d), sh = sleepHours(d), st = sleepGoal(t);
+  const r = (v,goal) => Math.max(0, Math.min(1, v/goal));
+  return [
+    ["Sueño", sh == null ? 0 : r(sh,st), 30],
+    ["Fuerza", isStrength(d) ? 1 : d.exType === "descanso" ? 0.5 : 0, 20],
+    ["Sol 15 min", r(d.sun||0,15), 15],
+    ["Proteína", t ? r(tot.prot,t.prot) : 0, 15],
+    ["Estrés bajo", d.anxiety ? (5-d.anxiety)/4 : 0, 10],
+    ["Sin alcohol", d.alcohol ? 0 : 1, 10],
+  ];
+}
+const score = (d,t) => Math.round(habits(d,t).reduce((a,h) => a + h[1]*h[2], 0));
+const toMin = s => { const [h,m] = s.split(":").map(Number); return h*60+m; };
+const toHHMM = m => { m = ((Math.round(m) % 1440) + 1440) % 1440; const h = Math.floor(m/60); return `${((h+11)%12)+1}:${pad(m%60)} ${h < 12 ? "a.m." : "p.m."}`; };
+
+/* ---------- dibujo ---------- */
+function arc(cx, cy, r, frac, color, w){
+  const C = 2*Math.PI*r, f = Math.max(0, Math.min(1, frac));
+  return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--surface2)" stroke-width="${w}"/>
+    <circle class="ring-anim" cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="${w}" stroke-linecap="round"
+      stroke-dasharray="${C}" stroke-dashoffset="${C*(1-f)}" transform="rotate(-90 ${cx} ${cy})" ${f === 0 ? 'stroke-opacity="0"' : ""}/>`;
+}
+const legendItem = (k, color, v, goal, unit) =>
+  `<div class="lg"><span class="k"><i class="sw" style="background:${color}"></i>${k}</span><span class="v">${v}<small>${goal ? " / "+goal : ""} ${unit}</small></span></div>`;
+function setVal(id, v){ const el = $(id); if (document.activeElement !== el) { if (el.type === "checkbox") el.checked = !!v; else el.value = v ?? ""; } }
+
+/* ---------- render ---------- */
+const DAYS = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"], MONTHS = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+function render(){
+  const d = day() || blankDay(), t = targets(), tot = totals(d), sh = sleepHours(d), st = sleepGoal(t);
+  const dt = parse(cur), today = iso(new Date());
+  $("dateLbl").textContent = cur === today ? "Hoy" : cur === shift(today,-1) ? "Ayer" : `${dt.getDate()} ${MONTHS[dt.getMonth()]}`;
+  $("dateLong").textContent = `${DAYS[dt.getDay()]} ${dt.getDate()} de ${MONTHS[dt.getMonth()]}`;
+
+  // HOY: anillos
+  $("ringsSvg").innerHTML = arc(84,84,74,t ? tot.kcal/t.kcal : 0,"var(--kcal)",14) + arc(84,84,56,t ? tot.prot/t.prot : 0,"var(--prot)",14) + arc(84,84,38,sh ? sh/st : 0,"var(--sleep)",14)
+    + `<text x="84" y="80" text-anchor="middle" fill="var(--ink)" font-family="Unbounded,sans-serif" font-weight="700" font-size="17">${t ? fmt(Math.max(0,t.kcal - tot.kcal)) : "—"}</text>
+       <text x="84" y="97" text-anchor="middle" fill="var(--muted)" font-size="9.5" font-weight="700">KCAL QUEDAN</text>`;
+  $("legend").innerHTML = legendItem("Calorías","var(--kcal)",fmt(tot.kcal),t && fmt(t.kcal),"kcal")
+    + legendItem("Proteína","var(--prot)",fmt(tot.prot),t && t.prot,"g")
+    + legendItem("Sueño","var(--sleep)",sh ? sh.toFixed(1) : "—",st,"h")
+    + (t ? "" : `<button class="btn-ghost small" data-goto="yo">Llena tu perfil para ver metas</button>`);
+
+  const hs = habits(d,t), sc = score(d,t);
+  const gC = Math.PI*45;
+  $("gaugeSvg").innerHTML = `<path d="M10 58 A45 45 0 0 1 100 58" fill="none" stroke="var(--surface2)" stroke-width="11" stroke-linecap="round"/>
+    <path class="ring-anim" d="M10 58 A45 45 0 0 1 100 58" fill="none" stroke="var(--horm)" stroke-width="11" stroke-linecap="round" stroke-dasharray="${gC}" stroke-dashoffset="${gC*(1-sc/100)}" ${sc === 0 ? 'stroke-opacity="0"' : ""}/>`;
+  $("scoreV").innerHTML = `${sc}<span class="muted" style="font-size:15px"> /100</span>`;
+  $("scoreL").textContent = sc >= 75 ? "Buen día para tus hormonas" : sc >= 50 ? "Vas a medias" : "Día flojo: mira qué falta abajo";
+  $("hchips").innerHTML = hs.map(h => `<span class="hchip ${h[1] >= 1 ? "on" : h[1] > 0 ? "part" : ""}"><i></i>${h[0]}</span>`).join("");
+
+  if (!coachCtl) $("advice").textContent = d.advice || "";
+  $("water").innerHTML = Array.from({length:Math.max(8, d.water+1)}, (_,i) => `<button class="glass ${i < d.water ? "full" : ""}" data-w="${i}" aria-label="${i+1} vasos"></button>`).join("");
+  $("waterN").textContent = d.water;
+
+  // COMIDA
+  const kc = Math.max(1, tot.prot*4 + tot.carb*4 + tot.fat*9);
+  let off = 0; const DC = 2*Math.PI*48;
+  const seg = (v, color) => { const f = v/kc, s = `<circle cx="60" cy="60" r="48" fill="none" stroke="${color}" stroke-width="16" stroke-dasharray="${DC*f} ${DC}" stroke-dashoffset="${-DC*off}" transform="rotate(-90 60 60)"/>`; off += f; return s; };
+  $("donutSvg").innerHTML = `<circle cx="60" cy="60" r="48" fill="none" stroke="var(--surface2)" stroke-width="16"/>`
+    + (tot.kcal ? seg(tot.prot*4,"var(--prot)") + seg(tot.carb*4,"var(--kcal)") + seg(tot.fat*9,"var(--horm)") : "")
+    + `<text x="60" y="58" text-anchor="middle" fill="var(--ink)" font-family="Unbounded,sans-serif" font-weight="700" font-size="16">${fmt(tot.kcal)}</text><text x="60" y="74" text-anchor="middle" fill="var(--muted)" font-size="9" font-weight="700">KCAL</text>`;
+  const mb = (n,k,color) => { const g = t?.[k], f = g ? tot[k]/g : 0;
+    return `<div class="mbar"><div class="top2"><span><i class="sw" style="background:${color};display:inline-block;margin-right:6px"></i>${n}</span><span>${fmt(tot[k])}${g ? " / "+g : ""} g</span></div><div class="bar"><i style="width:${Math.min(100,f*100)}%;background:${color}"></i></div></div>`; };
+  $("macros").innerHTML = mb("Proteína","prot","var(--prot)") + mb("Carbohidratos","carb","var(--kcal)") + mb("Grasas","fat","var(--horm)");
+
+  $("mealsSum").textContent = d.meals.length ? `${d.meals.length} registro${d.meals.length > 1 ? "s" : ""}` : "";
+  $("meals").innerHTML = d.meals.length ? d.meals.map((m,i) =>
+    `<div class="meal"><div class="ic">${esc(m.name.trim()[0]?.toUpperCase() || "·")}</div><div class="nm">${esc(m.name)}${m.src ? `<span class="tag">${m.src}</span>` : ""}<div class="sub">${m.prot ? r1(m.prot)+" g proteína" : ""}${m.grams ? " · "+fmt(m.grams)+" g" : ""}</div></div><span class="kc">${fmt(m.kcal)}</span><button data-del="${i}" aria-label="Borrar ${esc(m.name)}">✕</button></div>`).join("")
+    : `<div class="empty">Nada registrado este día.<br>Toca la cámara de abajo o escribe lo que comiste.</div>`;
+
+  $("nutr").innerHTML = NGROUPS.map(([g, color, list]) => `<div style="display:grid;gap:10px"><div class="label">${g}</div><div class="nut">${list.map(([n,k,u,limit]) => {
+    const v = tot[k], goal = t?.[k], f = goal ? v/goal : 0;
+    const col = !goal ? color : limit ? (f > 1 ? "var(--bad)" : color) : f >= 1 ? "var(--prot)" : color;
+    return `<div class="mbar"><div class="top2"><span>${n}${limit ? ' <span class="muted small">máx.</span>' : ""}</span><span class="${limit && f > 1 ? "bad" : f >= 1 && !limit ? "ok" : "muted"}">${r1(v)}${goal ? " / "+goal : ""} ${u}</span></div><div class="bar"><i style="width:${Math.min(100,f*100)}%;background:${col}"></i></div></div>`;
+  }).join("")}</div></div>`).join("");
+  const filled = NGROUPS.flatMap(g => g[2]).filter(x => !x[3] && t?.[x[1]]);
+  $("nutrScore").innerHTML = t ? `<b class="ok">${filled.filter(x => tot[x[1]] >= t[x[1]]).length}</b><span class="muted"> de ${filled.length} cubiertos</span>` : "";
+
+  // SUEÑO
+  setVal("bed", d.bed); setVal("wake", d.wake);
+  $("sleepBig").innerHTML = sh == null ? "—" : `${Math.floor(sh)}<small> h </small>${pad(Math.round((sh % 1)*60))}<small> min</small>`;
+  $("sleepMsg").textContent = sh == null ? "Anota a qué hora te acostaste y te levantaste."
+    : (sh >= st ? "Cumpliste tu meta de "+st+" h." : "Te faltaron "+(st-sh).toFixed(1)+" h para tu meta.") + (d.bed && d.bed > "22:00" ? " Te acostaste después de las 10 p.m." : "");
+  renderSleepWeek(st);
+
+  // CUERPO
+  $("exPills").innerHTML = EXTYPES.map(([v,n]) => `<button class="pill" data-ex="${v}" aria-pressed="${(d.exType || (d.train ? "fuerza" : "")) === v}">${n}</button>`).join("");
+  setVal("exMin", d.exMin); setVal("trainType", d.trainType); setVal("steps", d.steps);
+  setVal("sun", d.sun); setVal("alcohol", d.alcohol); setVal("weight", d.weight); setVal("notes", d.notes);
+  SCALES.forEach(k => $(k).querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", +b.dataset.v === d[k])));
+  renderWeight();
+
+  // YO
+  const p = profile();
+  ["pAge:age","pHeight:height","pWeight:weight","pGoalW:goalW","pSex:sex","pAct:act","pGoal:goal","pSleep:sleep"].forEach(s => { const [id,k] = s.split(":"); setVal(id, p[k]); });
+  $("targetsMsg").innerHTML = t ? `Tu meta diaria: <b>${fmt(t.kcal)} kcal</b>, <b>${t.prot} g</b> de proteína, <b>${t.carb} g</b> de carbohidratos y <b>${t.fat} g</b> de grasa. <span class="muted">Fórmula Mifflin-St Jeor ${p.goal === "ganar" ? "+300 kcal para ganar músculo" : p.goal === "bajar" ? "−400 kcal para bajar grasa" : "sin ajuste"}.</span>`
+    : `<span class="warn">Llena edad, estatura y peso para calcular tus metas.</span>`;
+  const L = labs().items.slice().sort((a,b) => b.date.localeCompare(a.date));
+  $("labs").innerHTML = L.length ? `<div class="tablewrap"><table><thead><tr><th>Fecha</th><th>Examen</th><th>Valor</th><th>Referencia</th><th></th></tr></thead><tbody>${
+    L.map(l => `<tr><td>${esc(l.date)}</td><td>${esc(l.name)}</td><td><b>${esc(l.val)}</b> ${esc(l.unit||"")}</td><td class="muted">${esc(l.ref||"")}</td><td><button data-lab="${esc(l.id)}" aria-label="Borrar">✕</button></td></tr>`).join("")}</tbody></table></div>`
+    : `<div class="empty">Sin exámenes guardados todavía.</div>`;
+}
+
+function renderSleepWeek(st){
+  const days = Array.from({length:7}, (_,i) => shift(cur, i-6));
+  const hs = days.map(s => sleepHours(day(s)));
+  const max = Math.max(st, ...hs.map(h => h||0)) * 1.1;
+  $("sleepBars").innerHTML = hs.map((h,i) => `<div class="c"><i style="height:${(h||0)/max*100}%;${i === 6 ? "" : "opacity:.75"}"></i></div>`).join("")
+    + `<div class="t" style="bottom:${st/max*100}%"><span>meta ${st} h</span></div>`;
+  $("sleepBx").innerHTML = days.map((s,i) => `<span><b>${hs[i] ? hs[i].toFixed(1) : "—"}</b>${DAYS[parse(s).getDay()].slice(0,2)}</span>`).join("");
+  const nights = days.map(day).filter(x => sleepHours(x) != null);
+  const stat = (lbl, v, sub, cls) => `<div class="stat"><span class="label">${lbl}</span><span class="v ${cls||""}">${v}</span><span class="small muted">${sub}</span></div>`;
+  if (!nights.length) { $("sleepStats").innerHTML = `<div class="empty" style="grid-column:1/-1">Cuando anotes tus noches verás tu promedio, tu deuda de sueño y qué tan regular es tu horario.</div>`; }
+  else {
+    const h = nights.map(sleepHours), avg = h.reduce((a,b) => a+b, 0)/h.length;
+    const debt = h.reduce((a,x) => a + Math.max(0, st-x), 0);
+    // hora de acostarse medida desde el mediodía, para que 11 p.m. y 1 a.m. queden cerca
+    const beds = nights.map(x => { const m = toMin(x.bed); return m < 720 ? m+1440 : m; });
+    const bAvg = beds.reduce((a,b) => a+b, 0)/beds.length;
+    const sd = Math.sqrt(beds.reduce((a,b) => a + (b-bAvg)**2, 0)/beds.length);
+    $("sleepStats").innerHTML =
+      stat("Promedio", avg.toFixed(1)+" h", `${nights.length} noche${nights.length > 1 ? "s" : ""}`, avg >= st ? "ok" : avg < 7 ? "bad" : "warn") +
+      stat("Deuda", debt.toFixed(1)+" h", "lo que te faltó", debt > 5 ? "bad" : debt > 2 ? "warn" : "ok") +
+      stat("Regularidad", "±"+Math.round(sd)+" min", sd < 30 ? "muy regular" : sd < 60 ? "regular" : "irregular", sd < 30 ? "ok" : sd < 60 ? "warn" : "bad") +
+      stat("Te acuestas", toHHMM(bAvg), "hora promedio");
+  }
+  const wg = profile().wakeGoal || "06:00", w = toMin(wg);
+  setVal("wakeGoal", wg);
+  $("cycles").innerHTML = [6,5,4].map(n => `<div class="tchip ${n === 6 ? "best" : ""}"><b>${toHHMM(w - n*90 - 15)}</b><span class="small muted">${n} ciclos · ${(n*1.5).toFixed(1)} h</span></div>`).join("");
+}
+
+function renderWeight(){
+  const p = profile();
+  const pts = Object.keys(cache).filter(k => k.startsWith("d-") && cache[k]?.weight).sort().slice(-30).map(k => [k.slice(2), +cache[k].weight]);
+  const last = pts.length ? pts[pts.length-1][1] : p.weight;
+  $("weightMsg").innerHTML = last && p.goalW ? `<span class="muted">faltan</span> <b>${Math.abs(p.goalW-last).toFixed(1)} kg</b>` : "";
+  if (pts.length < 2) { $("wChart").innerHTML = `<div class="empty">Anota tu peso al menos dos días para ver la curva.</div>`; return; }
+  const W = 320, H = 130, L = 34, R = 10, T = 12, B = 22;
+  const vals = pts.map(x => x[1]).concat(p.goalW ? [p.goalW] : []);
+  const lo = Math.floor(Math.min(...vals) - 1), hi = Math.ceil(Math.max(...vals) + 1);
+  const x = i => L + i*(W-L-R)/(pts.length-1), y = v => T + (hi-v)/(hi-lo)*(H-T-B);
+  const line = pts.map((q,i) => `${x(i).toFixed(1)},${y(q[1]).toFixed(1)}`).join(" ");
+  const area = `${L},${H-B} ${line} ${x(pts.length-1).toFixed(1)},${H-B}`;
+  $("wChart").innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Peso de los últimos registros">
+    <defs><linearGradient id="wg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="var(--prot)" stop-opacity=".35"/><stop offset="1" stop-color="var(--prot)" stop-opacity="0"/></linearGradient></defs>
+    ${[lo,hi].map(v => `<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="10" fill="var(--muted)">${v}</text>`).join("")}
+    ${p.goalW && p.goalW >= lo && p.goalW <= hi ? `<line x1="${L}" x2="${W-R}" y1="${y(p.goalW)}" y2="${y(p.goalW)}" stroke="var(--horm)" stroke-dasharray="4 4"/><text x="${W-R}" y="${y(p.goalW)-4}" text-anchor="end" font-size="10" fill="var(--horm)">meta ${p.goalW}</text>` : ""}
+    <polygon points="${area}" fill="url(#wg)"/>
+    <polyline points="${line}" fill="none" stroke="var(--prot)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${x(pts.length-1)}" cy="${y(pts[pts.length-1][1])}" r="4.5" fill="var(--prot)" stroke="var(--surface)" stroke-width="2"/>
+    <text x="${L}" y="${H-6}" font-size="10" fill="var(--muted)">${pts[0][0].slice(5)}</text><text x="${W-R}" y="${H-6}" text-anchor="end" font-size="10" fill="var(--muted)">${pts[pts.length-1][0].slice(5)}</text>
+  </svg>`;
+}
+
+/* ---------- pestañas ---------- */
+const TABS = ["hoy","comida","sueno","cuerpo","yo"];
+function show(tab){
+  if (!TABS.includes(tab)) tab = "hoy";
+  TABS.forEach(s => $("s-"+s).hidden = s !== tab);
+  document.querySelectorAll(".tab").forEach(b => b.dataset.tab === tab ? b.setAttribute("aria-current","page") : b.removeAttribute("aria-current"));
+  try { localStorage.setItem("cuerpo-ares-tab", tab); } catch {}
+  window.scrollTo(0,0);
+}
+document.querySelectorAll(".tab").forEach(b => b.onclick = () => show(b.dataset.tab));
+$("toYo").onclick = () => show("yo");
+document.addEventListener("click", e => { const g = e.target.closest("[data-goto]"); if (g) show(g.dataset.goto); });
+
+/* ---------- foto o texto de comida → Gemini calcula ---------- */
+const ERR = {no_key:"Falta tu clave de Gemini. Ve al ícono de persona → Ajustes y pégala.",
+  bad_key:"La clave de Gemini no sirve. Revísala en Ajustes.", offline:"No hay internet. Agrega la comida a mano o intenta cuando tengas señal.",
+  rate_limited:"Gemini está ocupado o llegaste al límite gratis de hoy. Intenta en un rato o agrega la comida a mano.",
+  invalid_json:"Gemini no devolvió un resultado claro. Intenta otra vez, más cerca del plato.", empty:"Gemini no respondió nada. Intenta otra vez."};
+const errMsg = e => ERR[e?.code] || "No se pudo calcular. Intenta de nuevo.";
+const FOOD_JSON = `Responde SOLO un JSON con esta forma:
+{"items":[{"name":"Arroz blanco","grams":150,"kcal":195,"prot":4,"carb":43,"fat":0.4,"fiber":0.6,"sugar":0.1,"vitA":0,"vitC":0,"vitD":0,"b12":0,"folate":5,"calcium":15,"iron":0.3,"mag":18,"zinc":0.7,"potassium":55,"sodium":2,"omega3":0}],"note":"una frase corta y útil"}
+Unidades: kcal; gramos para prot, carb, fat, fiber, sugar y omega3; miligramos para vitC, calcium, iron, mag, zinc, potassium y sodium; microgramos para vitA (RAE), vitD, b12 y folate. Usa valores de tablas de composición (USDA o ICBF Colombia). Cuenta el aceite de fritura y la sal si aplica. Nombres en español.`;
+let found = null, foundUrl = "";
+
+async function analyze(file, text){
+  if (!file && !text) return;
+  show("comida");
+  foundUrl = file ? URL.createObjectURL(file) : "";
+  const box = $("analysis");
+  box.hidden = false;
+  box.innerHTML = `<div class="found">${foundUrl ? `<img class="ph" src="${foundUrl}" alt="Foto de la comida">` : ""}<div class="muted">${foundUrl ? "Gemini está mirando el plato…" : "Gemini está calculando…"} unos 10 a 30 segundos.</div></div>`;
+  const prompt = file
+    ? `Eres nutricionista en Colombia (Bucaramanga). Mira la foto del plato de comida. Identifica cada alimento, calcula la porción en gramos según lo que se ve y sus nutrientes.
+${text ? "Detalle que da la persona: " + text + "\n" : ""}${FOOD_JSON} Si la foto no es comida, devuelve "items":[] y explica en "note".`
+    : `Eres nutricionista en Colombia (Bucaramanga). La persona escribió lo que comió: "${text}". Separa cada alimento, usa porciones típicas colombianas si no dice la cantidad, y calcula sus nutrientes.
+${FOOD_JSON} Si no es comida, devuelve "items":[] y explica en "note".`;
+  try {
+    const res = await ai.json(prompt, file);
+    const items = Array.isArray(res?.items) ? res.items.filter(i => i && i.name) : [];
+    found = items.map(i => ({name:String(i.name).slice(0,60), grams:+i.grams||0, ...Object.fromEntries(NKEYS.map(k => [k, Math.max(0, +i[k]||0)])), src:file ? "foto" : "texto"}));
+    showFound(res?.note ? String(res.note) : "");
+  } catch (e) {
+    box.innerHTML = `<div class="found">${foundUrl ? `<img class="ph" src="${foundUrl}" alt="Foto de la comida">` : ""}<div class="bad">${esc(errMsg(e))}</div></div>`;
+  }
+}
+function showFound(note){
+  const box = $("analysis"), img = foundUrl ? `<img class="ph" src="${foundUrl}" alt="Foto de la comida">` : "";
+  if (!found.length) { box.innerHTML = `<div class="found">${img}<div>${esc(note || "No encontré comida.")}</div><button class="btn-ghost" id="dropFound">Cerrar</button></div>`; return; }
+  const sum = found.reduce((a,i) => ({kcal:a.kcal+i.kcal, prot:a.prot+i.prot}), {kcal:0,prot:0});
+  box.innerHTML = `<div class="found">${img}
+    <div class="row between"><span class="disp" style="font-size:26px">${fmt(sum.kcal)} <span class="muted" style="font-size:14px">kcal</span></span><span class="ok"><b>${r1(sum.prot)} g</b> proteína</span></div>
+    <div>${found.map((i,n) => `<div class="fitem"><span>${esc(i.name)} <span class="muted small">${i.grams ? fmt(i.grams)+" g" : ""}</span></span><span class="small"><b>${fmt(i.kcal)}</b> kcal</span><button data-drop="${n}" aria-label="Quitar ${esc(i.name)}">✕</button></div>`).join("")}</div>
+    ${note ? `<p class="note">${esc(note)}</p>` : ""}
+    <div class="grid2"><label class="field" style="grid-column:1/-1"><span class="label">Me comí</span><select id="portion"><option value="0.5">La mitad</option><option value="1" selected>Todo</option><option value="1.5">Una y media</option><option value="2">El doble</option></select></label>
+    <button class="btn-main" id="addFound">Agregar al día</button><button class="btn-ghost" id="dropFound">Descartar</button></div></div>`;
+}
+$("analysis").addEventListener("click", e => {
+  const drop = e.target.closest("[data-drop]");
+  if (drop) { found.splice(+drop.dataset.drop,1); showFound(""); return; }
+  if (e.target.id === "addFound") {
+    const k = +$("portion").value;
+    found.forEach(i => getDay().meals.push({...i, ...Object.fromEntries(NKEYS.map(n => [n, r1(i[n]*k)])), grams:Math.round(i.grams*k)}));
+    found = null; $("analysis").hidden = true; $("hint").value = ""; touchDay();
+  }
+  if (e.target.id === "dropFound") { found = null; $("analysis").hidden = true; }
+});
+$("photo").addEventListener("change", e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) analyze(f, $("hint").value.trim()); });
+$("sayForm").onsubmit = e => { e.preventDefault(); const t = $("hint").value.trim(); if (t) analyze(null, t); };
+
+/* ---------- entrenador ---------- */
+let coachCtl = null;
+async function coach(){
+  const d = getDay(), t = targets(), tot = totals(d), p = profile(), sh = sleepHours(d);
+  const wk = Array.from({length:7}, (_,i) => shift(cur, i-6)).map(s => { const x = day(s); return x ? `${s}: ${fmt(totals(x).kcal)} kcal, sueño ${sleepHours(x)?.toFixed(1) ?? "?"} h, ejercicio ${x.exType || (x.train ? "fuerza" : "nada")}` : `${s}: sin datos`; }).join("\n");
+  const prompt = `Eres entrenador personal y nutricionista. Hablas español de Colombia, de tú, directo y sencillo. La persona quiere mejorar su salud, su sueño y sus hormonas (testosterona) con hábitos.
+Perfil: ${p.sex === "f" ? "mujer" : "hombre"}, ${p.age ?? "?"} años, ${p.height ?? "?"} cm, ${p.weight ?? "?"} kg, meta ${p.goalW ?? "?"} kg, objetivo: ${p.goal}.
+Metas diarias: ${t ? NKEYS.map(k => k+" "+t[k]).join(", ") : "sin calcular (faltan datos del perfil)"}.
+Hoy (${cur}) lleva: ${NKEYS.map(k => k+" "+r1(tot[k])).join(", ")}. Comidas: ${d.meals.map(m => m.name).join(", ") || "ninguna"}. Agua: ${d.water} vasos.
+Ejercicio hoy: ${d.exType || "nada"} ${d.exMin ? d.exMin+" min" : ""} ${d.trainType || ""}. Pasos: ${d.steps ?? "?"}. Sol: ${d.sun ?? 0} min. Alcohol: ${d.alcohol ? "sí" : "no"}.
+Sueño anoche: ${sh ? sh.toFixed(1)+" h (se acostó "+d.bed+")" : "sin registrar"}, meta ${sleepGoal(t)} h. Energía ${d.energy||"?"}/5, ánimo ${d.mood||"?"}/5, ansiedad ${d.anxiety||"?"}/5, libido ${d.libido||"?"}/5. Puntaje de hábitos hormonales: ${score(d,t)}/100.
+Últimos 7 días:
+${wk}
+
+Escribe 4 bloques cortos con estos títulos exactos, máximo 200 palabras en total, sin markdown ni asteriscos:
+COMIDA: qué comer en lo que queda del día para llegar a las metas y cubrir los nutrientes que faltan, con comida colombiana barata.
+EJERCICIO: la rutina concreta de hoy (ejercicios, series x repeticiones) según lo que ya hizo esta semana; si ya entrenó, cómo recuperarse.
+SUEÑO: qué hacer esta noche y a qué hora acostarse.
+HORMONAS: el hábito que más le falta hoy y cómo arreglarlo.
+No diagnostiques enfermedades. Si algo se ve preocupante, dile que vaya al médico.`;
+  coachCtl = true;
+  $("coachBtn").disabled = true;
+  $("advice").textContent = "Pensando… unos 20 segundos.";
+  try {
+    const text = (await ai.text(prompt)).replace(/\*\*/g, "");
+    $("advice").textContent = text;
+    getDay().advice = text; store.save();
+  } catch (e) {
+    $("advice").textContent = errMsg(e);
+  } finally { coachCtl = null; $("coachBtn").disabled = false; }
+}
+$("coachBtn").onclick = coach;
+
+function initAI(){
+  const has = !!ai.key();
+  $("coachBtn").disabled = !has; $("sayBtn").disabled = !has; $("photo").disabled = !has;
+  $("camTab").classList.toggle("off", !has);
+  $("camNote").innerHTML = has ? "O toca la cámara de abajo. Si escribes algo antes de la foto, se usa como detalle del plato."
+    : `Para la foto y el cálculo falta tu clave gratis de Gemini. <button class="btn-ghost small" data-goto="yo">Ponerla</button>`;
+  $("keyMsg").innerHTML = has ? `<span class="ok">Clave guardada.</span> <span class="muted">Termina en …${esc(ai.key().slice(-4))}</span>` : `<span class="warn">Sin clave todavía.</span>`;
+}
+$("camTab").addEventListener("click", e => { if (!ai.key()) { e.preventDefault(); show("yo"); $("keyIn").focus(); } });
+$("keyForm").onsubmit = async e => {
+  e.preventDefault();
+  const k = $("keyIn").value.trim(); if (!k) return;
+  try { localStorage.setItem(KEY+"-gemini", k); } catch {}
+  $("keyIn").value = ""; $("keyMsg").textContent = "Probando la clave…";
+  try { await ai.text("Responde solo: ok"); initAI(); $("keyMsg").innerHTML = `<span class="ok">Clave lista. Ya puedes tomar fotos.</span>`; }
+  catch (err) {
+    if (err.code === "bad_key") { try { localStorage.removeItem(KEY+"-gemini"); } catch {} initAI(); $("keyMsg").innerHTML = `<span class="bad">${esc(errMsg(err))}</span>`; }
+    else { initAI(); $("keyMsg").innerHTML = `<span class="warn">Guardada, pero no se pudo probar ahora: ${esc(errMsg(err))}</span>`; }
+  }
+};
+
+/* ---------- respaldo ---------- */
+$("exportBtn").onclick = async () => {
+  const txt = JSON.stringify(cache);
+  try { await navigator.clipboard.writeText(txt); $("backupMsg").innerHTML = `<span class="ok">Respaldo copiado. Pégalo en un chat contigo mismo o en tus notas.</span>`; }
+  catch { $("backup").hidden = false; $("backup").value = txt; $("backup").select(); $("backupMsg").textContent = "Copia este texto a mano y guárdalo."; }
+};
+$("importBtn").onclick = () => {
+  const ta = $("backup");
+  if (ta.hidden || !ta.value.trim()) { ta.hidden = false; ta.value = ""; ta.focus(); $("backupMsg").textContent = "Pega el respaldo en el cuadro y vuelve a tocar Restaurar."; return; }
+  try { const d = JSON.parse(ta.value); if (typeof d !== "object" || !d) throw 0; cache = d; store.save(); render(); ta.hidden = true; $("backupMsg").innerHTML = `<span class="ok">Datos restaurados.</span>`; }
+  catch { $("backupMsg").innerHTML = `<span class="bad">Ese texto no es un respaldo válido.</span>`; }
+};
+
+/* ---------- instalar y funcionar sin internet ---------- */
+let installEvt = null;
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; $("installBtn").hidden = false; });
+$("installBtn").onclick = async () => { if (!installEvt) return; installEvt.prompt(); await installEvt.userChoice; installEvt = null; $("installBtn").hidden = true; };
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+
+/* ---------- eventos ---------- */
+$("quick").innerHTML = QUICK.map((q,i) => `<button class="qchip" data-q="${i}">${q[0]}<b>${q[1]}</b></button>`).join("");
+$("quick").onclick = e => { const b = e.target.closest("[data-q]"); if (!b) return; const q = QUICK[b.dataset.q];
+  getDay().meals.push({name:q[0], ...Object.fromEntries(QKEYS.map((k,i) => [k, q[i+1]]))}); touchDay(); };
+$("mealForm").onsubmit = e => { e.preventDefault(); getDay().meals.push({name:$("mName").value.trim(), kcal:+$("mKcal").value||0, prot:+$("mProt").value||0}); e.target.reset(); touchDay(); };
+$("meals").onclick = e => { const b = e.target.closest("[data-del]"); if (!b) return; getDay().meals.splice(+b.dataset.del,1); touchDay(); };
+$("water").onclick = e => { const b = e.target.closest("[data-w]"); if (!b) return; const d = getDay(), n = +b.dataset.w + 1; d.water = d.water === n ? n-1 : n; touchDay(); };
+$("exPills").onclick = e => { const b = e.target.closest("[data-ex]"); if (!b) return; const d = getDay(); d.exType = d.exType === b.dataset.ex ? "" : b.dataset.ex; d.train = false; touchDay(); };
+SCALES.forEach(k => {
+  $(k).innerHTML = [1,2,3,4,5].map(v => `<button data-v="${v}" aria-pressed="false">${v}</button>`).join("");
+  $(k).onclick = e => { const b = e.target.closest("[data-v]"); if (!b) return; const d = getDay(); d[k] = d[k] === +b.dataset.v ? 0 : +b.dataset.v; touchDay(); };
+});
+const bindDay = (id, key, kind) => $(id).addEventListener(kind === "check" ? "change" : "input", e => {
+  const el = e.target, d = getDay();
+  d[key] = kind === "check" ? el.checked : kind === "num" ? (el.value === "" ? null : +el.value) : el.value;
+  touchDay();
+});
+bindDay("bed","bed"); bindDay("wake","wake"); bindDay("exMin","exMin","num"); bindDay("trainType","trainType");
+bindDay("sun","sun","num"); bindDay("steps","steps","num"); bindDay("alcohol","alcohol","check"); bindDay("weight","weight","num"); bindDay("notes","notes");
+[["pAge","age",1],["pHeight","height",1],["pWeight","weight",1],["pGoalW","goalW",1],["pSex","sex"],["pAct","act"],["pGoal","goal"],["pSleep","sleep",1]].forEach(([id,k,num]) =>
+  $(id).addEventListener("input", e => { profile()[k] = num ? (e.target.value === "" ? null : +e.target.value) : e.target.value; store.save("profile"); render(); }));
+$("wakeGoal").addEventListener("change", e => { if (e.target.value) { profile().wakeGoal = e.target.value; store.save("profile"); render(); } });
+$("labForm").onsubmit = e => { e.preventDefault();
+  labs().items.push({id:Date.now().toString(36), date:$("lDate").value, name:$("lName").value.trim(), val:$("lVal").value.trim(), unit:$("lUnit").value.trim(), ref:$("lRef").value.trim()});
+  e.target.reset(); $("lDate").value = cur; store.save("labs"); render(); };
+$("labs").onclick = e => { const b = e.target.closest("[data-lab]"); if (!b) return; const L = labs(); L.items = L.items.filter(l => l.id !== b.dataset.lab); store.save("labs"); render(); };
+const go = s => { cur = s; render(); };
+$("prev").onclick = () => go(shift(cur,-1)); $("next").onclick = () => go(shift(cur,1));
+$("dateLbl").onclick = () => go(iso(new Date()));
+$("lDate").value = cur;
+
+let startTab = "hoy"; try { startTab = localStorage.getItem("cuerpo-ares-tab") || "hoy"; } catch {}
+show(startTab);
+store.init();
+initAI();
+</script>
+</body>
+</html>
