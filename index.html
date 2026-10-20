@@ -57,7 +57,7 @@ input::placeholder,textarea::placeholder{color:var(--muted)}
 .mark{width:34px;height:34px;border-radius:10px;background:conic-gradient(from 200deg,var(--kcal),var(--horm),var(--prot),var(--sleep),var(--kcal));display:grid;place-items:center}
 .mark::after{content:"";width:16px;height:16px;border-radius:50%;background:var(--bg)}
 .brand b{font-family:var(--f-display);font-size:15px;letter-spacing:-.01em}
-.brand span{display:block;font-size:11px;color:var(--muted)}
+.brand .status{display:flex;font-size:11px;color:var(--muted)}
 .datepill{display:flex;align-items:center;background:var(--surface);border-radius:99px;padding:3px}
 .datepill button{background:transparent;padding:6px 10px;border-radius:99px}
 .datepill .d{font-weight:700;font-size:13px;padding:0 4px;white-space:nowrap}
@@ -74,8 +74,27 @@ input::placeholder,textarea::placeholder{color:var(--muted)}
 
 /* anillos */
 .rings{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
-@media (max-width:380px){.rings{grid-template-columns:1fr;justify-items:center}}
 .rings svg{width:168px;height:168px;display:block}
+@media (max-width:440px){.rings{gap:14px}.rings svg{width:136px;height:136px}.lg .v{font-size:17px}}
+@media (max-width:330px){.rings{grid-template-columns:1fr;justify-items:center}}
+/* plan de hoy */
+.plan{display:grid;gap:8px}
+.task{display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:center;background:var(--surface2);border-radius:14px;padding:10px 12px;text-align:left;width:100%;font-weight:600}
+.task .tk{width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:13px}
+.task .tx small{display:block;font-weight:500;color:var(--muted);font-size:12px}
+.task .go{font-size:12px;color:var(--muted)}
+.task.done{opacity:.55}
+.task.done .tk{background:var(--prot);border-color:var(--prot);color:#06170F}
+.task.done .tx{text-decoration:line-through}
+/* bienvenida */
+.onb{position:fixed;inset:0;z-index:20;background:var(--bg);overflow-y:auto;
+  padding:calc(24px + env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px))}
+.onb .in{max-width:480px;margin:0 auto;display:grid;gap:16px}
+.onb h1{font-family:var(--f-display);font-size:28px;line-height:1.15;letter-spacing:-.02em}
+.onb .steps{display:flex;gap:6px}
+.onb .steps i{height:4px;flex:1;border-radius:9px;background:var(--surface2)}
+.onb .steps i.on{background:var(--kcal)}
+.onb .big{padding:14px;font-size:16px}
 .legend{display:grid;gap:12px;width:100%}
 .lg{display:grid;gap:2px}
 .lg .v{font-size:20px;font-weight:800}
@@ -240,6 +259,11 @@ textarea{min-height:70px;resize:vertical}
         <svg viewBox="0 0 168 168" id="ringsSvg" role="img" aria-label="Anillos de calorías, proteína y sueño"></svg>
         <div class="legend" id="legend"></div>
       </div>
+    </div>
+
+    <div class="card">
+      <div class="row between"><h3>Tu plan de hoy</h3><span class="small" id="planN"></span></div>
+      <div class="plan" id="plan"></div>
     </div>
 
     <div class="card">
@@ -456,6 +480,8 @@ textarea{min-height:70px;resize:vertical}
     <p class="note">Herramienta de registro personal, no consejo médico. Las calorías de una foto son un cálculo aproximado. Si algo te preocupa, ve al médico con estos datos.</p>
   </main>
 </div>
+
+<div class="onb" id="onb" hidden><form class="in" id="onbIn" autocomplete="off"></form></div>
 
 <nav class="tabbar" aria-label="Secciones">
   <div class="tabs">
@@ -678,6 +704,9 @@ function render(){
   const dt = parse(cur), today = iso(new Date());
   $("dateLbl").textContent = cur === today ? "Hoy" : cur === shift(today,-1) ? "Ayer" : `${dt.getDate()} ${MONTHS[dt.getMonth()]}`;
   $("dateLong").textContent = `${DAYS[dt.getDay()]} ${dt.getDate()} de ${MONTHS[dt.getMonth()]}`;
+  const name = (profile().name || "").trim().split(" ")[0], hr = new Date().getHours();
+  $("hello").textContent = cur !== today ? "Ese día" : (hr < 12 ? "Buenos días" : hr < 19 ? "Buenas tardes" : "Buenas noches") + (name ? ", " + name : "");
+  renderPlan(d, t);
 
   // HOY: anillos
   $("ringsSvg").innerHTML = arc(84,84,74,t ? tot.kcal/t.kcal : 0,"var(--kcal)",14) + arc(84,84,56,t ? tot.prot/t.prot : 0,"var(--prot)",14) + arc(84,84,38,sh ? sh/st : 0,"var(--sleep)",14)
@@ -1033,10 +1062,107 @@ $("prev").onclick = () => go(shift(cur,-1)); $("next").onclick = () => go(shift(
 $("dateLbl").onclick = () => go(iso(new Date()));
 $("lDate").value = cur;
 
+/* ---------- plan de hoy: lo que falta, de un toque ---------- */
+// set: marca la tarea desde aquí; go: lleva a la pantalla donde se anota
+function planTasks(d){
+  const sh = sleepHours(d);
+  return [
+    {k:"sleep", t:"Anotar cómo dormiste", s:"Hora de acostarte y levantarte", done: sh != null, go:"sueno"},
+    {k:"food", t:"Registrar tus comidas", s:`${d.meals.length} de 3 · tómale foto al plato`, done: d.meals.length >= 3, go:"foto"},
+    {k:"sun", t:"15 minutos de sol en la mañana", s:"Testosterona, cortisol y melatonina", done: (d.sun||0) >= 15, set: x => x.sun = (x.sun||0) >= 15 ? null : 15},
+    {k:"train", t:"Entrenar", s: d.exType ? EXTYPES.find(e => e[0] === d.exType)?.[1] : "Pesas, fútbol, cardio o descanso", done: !!d.exType, go:"cuerpo"},
+    {k:"steps", t:"Caminar 7.000 pasos", s:"Mira los pasos en tu cel y anótalos", done: (d.steps||0) >= 7000, go:"cuerpo"},
+    {k:"water", t:"Tomar 8 vasos de agua", s:`${d.water} de 8 · toca para sumar uno`, done: d.water >= 8, set: x => x.water = x.water >= 8 ? 0 : x.water + 1},
+    {k:"caf", t:"Nada de café después de las 2 p.m.", s:"Cortisol y melatonina", done: d.lateCaffeine === false, set: x => x.lateCaffeine = x.lateCaffeine === false ? null : false},
+    {k:"scr", t:"Sin pantallas 1 h antes de dormir", s:"Más melatonina y sueño profundo", done: d.screensOff === true, set: x => x.screensOff = !x.screensOff},
+    {k:"mood", t:"Anotar energía, ánimo y ansiedad", s:"Un toque del 1 al 5", done: !!(d.energy && d.mood && d.anxiety), go:"cuerpo"},
+    {k:"coach", t:"Pedir consejo al entrenador", s:"Al final del día", done: !!d.advice, go:"coach"},
+  ];
+}
+function renderPlan(d){
+  const ts = planTasks(d), n = ts.filter(x => x.done).length;
+  $("planN").innerHTML = `<b class="${n === ts.length ? "ok" : "warn"}">${n}</b><span class="muted"> de ${ts.length}</span>`;
+  $("plan").innerHTML = ts.slice().sort((a,b) => a.done - b.done).map(x =>
+    `<button class="task ${x.done ? "done" : ""}" data-task="${x.k}"><span class="tk">${x.done ? "✓" : ""}</span><span class="tx">${x.t}<small>${esc(x.s || "")}</small></span><span class="go">${x.set ? "" : "›"}</span></button>`).join("");
+}
+$("plan").onclick = e => {
+  const b = e.target.closest("[data-task]"); if (!b) return;
+  const x = planTasks(getDay()).find(t => t.k === b.dataset.task); if (!x) return;
+  if (x.set) { x.set(getDay()); touchDay(); return; }
+  if (x.go === "foto") { if (ai.key()) $("photo").click(); else show("comida"); return; }
+  if (x.go === "coach") { $("coachBtn").scrollIntoView({behavior:"smooth", block:"center"}); return; }
+  show(x.go);
+};
+
+/* ---------- bienvenida (primera vez) ---------- */
+const ONB = KEY + "-onb";
+let onbStep = 0;
+const onbDone = () => { try { return !!localStorage.getItem(ONB); } catch { return true; } };
+function renderOnb(){
+  const p = profile(), f = $("onbIn");
+  const bar = `<div class="steps">${[0,1,2].map(i => `<i class="${i <= onbStep ? "on" : ""}"></i>`).join("")}</div>`;
+  if (onbStep === 0) f.innerHTML = bar + `<div class="mark" aria-hidden="true"></div>
+    <h1>Bienvenido a Cuerpo Ares</h1>
+    <p class="muted">Comida por foto, sueño, ejercicio y tus hormonas en un solo lugar. Primero tus datos, para calcular tus metas de calorías, proteína y sueño.</p>
+    <div class="grid2">
+      <label class="field" style="grid-column:1/-1"><span class="label">Tu nombre</span><input id="oName" value="${esc(p.name || "")}" placeholder="Alejandro"></label>
+      <label class="field"><span class="label">Edad</span><input id="oAge" type="number" min="12" max="99" required value="${p.age ?? ""}"></label>
+      <label class="field"><span class="label">Peso actual (kg)</span><input id="oW" type="number" min="30" step="0.1" required value="${p.weight ?? ""}"></label>
+      <label class="field"><span class="label">Estatura (cm)</span><input id="oH" type="number" min="120" max="230" required value="${p.height ?? ""}"></label>
+      <label class="field"><span class="label">Peso meta (kg)</span><input id="oGW" type="number" min="30" step="0.1" value="${p.goalW ?? ""}"></label>
+      <label class="field" style="grid-column:1/-1"><span class="label">Objetivo</span><select id="oGoal">
+        <option value="ganar" ${p.goal === "ganar" ? "selected" : ""}>Ganar músculo</option><option value="mantener" ${p.goal === "mantener" ? "selected" : ""}>Mantener</option><option value="bajar" ${p.goal === "bajar" ? "selected" : ""}>Bajar grasa</option></select></label>
+    </div>
+    <button type="submit" class="btn-main big">Seguir</button>`;
+  if (onbStep === 1) f.innerHTML = bar + `<h1>Conecta la inteligencia artificial</h1>
+    <p class="muted">Gemini de Google lee las fotos de tu comida y te da consejos. Es gratis. Copia tu clave (empieza por <b>AQ.</b> o <b>AIza</b>) y toca <b>Pegar</b>. Se guarda solo en este celular.</p>
+    <div class="row" style="flex-wrap:nowrap"><input id="oKey" type="password" placeholder="Tu clave de Gemini"><button type="button" class="btn-ghost" id="oPaste">Pegar</button></div>
+    <div class="small" id="oMsg"></div>
+    <button type="submit" class="btn-main big">Guardar y probar</button>
+    <button type="button" class="btn-ghost" id="oSkip">Hacerlo después</button>
+    <p class="note">¿No tienes clave? Entra a aistudio.google.com/apikey con tu cuenta de Google y toca "Create API key".</p>`;
+  if (onbStep === 2) { const t = targets(); f.innerHTML = bar + `<h1>Listo${p.name ? ", " + esc(p.name.split(" ")[0]) : ""}</h1>
+    ${t ? `<div class="stats"><div class="stat"><span class="label">Calorías</span><span class="v">${fmt(t.kcal)}</span><span class="small muted">al día</span></div><div class="stat"><span class="label">Proteína</span><span class="v">${t.prot} g</span><span class="small muted">al día</span></div><div class="stat"><span class="label">Sueño</span><span class="v">${t.sleep} h</span><span class="small muted">cada noche</span></div><div class="stat"><span class="label">Meta</span><span class="v">${p.goalW ?? "—"} kg</span><span class="small muted">peso</span></div></div>` : ""}
+    <p class="muted">Cada día: anota cómo dormiste al despertar, tómale foto a cada plato y sigue tu <b>plan de hoy</b> en la pantalla de inicio. En 2 semanas ves tu progreso en Cuerpo.</p>
+    <button type="submit" class="btn-main big">Empezar</button>`; }
+  $("onb").hidden = false;
+}
+async function tryKey(){
+  const k = $("oKey").value.trim(); if (!k) { $("oMsg").innerHTML = `<span class="warn">Pega la clave primero.</span>`; return false; }
+  try { localStorage.setItem(KEY+"-gemini", k); } catch {}
+  $("oMsg").textContent = "Probando la clave…";
+  try { await ai.text("Responde solo: ok"); initAI(); return true; }
+  catch (err) {
+    if (err.code === "bad_key") { try { localStorage.removeItem(KEY+"-gemini"); } catch {} }
+    initAI(); $("oMsg").innerHTML = `<span class="${err.code === "bad_key" ? "bad" : "warn"}">${esc(errMsg(err))}</span>`;
+    return err.code !== "bad_key";
+  }
+}
+$("onbIn").onsubmit = async e => {
+  e.preventDefault();
+  if (onbStep === 0) {
+    const p = profile();
+    p.name = $("oName").value.trim(); p.age = +$("oAge").value || null; p.weight = +$("oW").value || null;
+    p.height = +$("oH").value || null; p.goalW = +$("oGW").value || null; p.goal = $("oGoal").value;
+    store.save(); render(); onbStep = ai.key() ? 2 : 1; renderOnb(); return;
+  }
+  if (onbStep === 1) { if (await tryKey()) { onbStep = 2; renderOnb(); } return; }
+  try { localStorage.setItem(ONB, "1"); } catch {}
+  $("onb").hidden = true; show("hoy");
+};
+$("onbIn").addEventListener("click", async e => {
+  if (e.target.id === "oSkip") { onbStep = 2; renderOnb(); }
+  if (e.target.id === "oPaste") {
+    try { $("oKey").value = (await navigator.clipboard.readText()).trim(); $("oMsg").textContent = "Clave pegada. Toca Guardar y probar."; }
+    catch { $("oMsg").innerHTML = `<span class="warn">El cel no dejó leer el portapapeles. Mantén presionado el cuadro y toca Pegar.</span>`; $("oKey").focus(); }
+  }
+});
+
 let startTab = "hoy"; try { startTab = localStorage.getItem("cuerpo-ares-tab") || "hoy"; } catch {}
 show(startTab);
 store.init();
 initAI();
+if (!onbDone() && (!profile().age || !profile().weight || !ai.key())) renderOnb();
 </script>
 </body>
 </html>
