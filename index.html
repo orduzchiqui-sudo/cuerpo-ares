@@ -95,6 +95,40 @@ input::placeholder,textarea::placeholder{color:var(--muted)}
 .onb .steps i{height:4px;flex:1;border-radius:9px;background:var(--surface2)}
 .onb .steps i.on{background:var(--kcal)}
 .onb .big{padding:14px;font-size:16px}
+/* nivel, meta y avisos */
+.lvl{display:grid;gap:5px}
+.lvl .top2{display:flex;justify-content:space-between;font-size:12.5px;font-weight:700}
+.nowcard{background:linear-gradient(135deg,#2A2470,#16173A);border:1px solid #3A3A8A}
+.nowcard .sbtn{background:var(--sleep);color:#0B0D22;font-size:16px;padding:14px}
+.goalbar{position:relative;height:10px;border-radius:9px;background:var(--surface2)}
+.goalbar i{position:absolute;left:0;top:0;bottom:0;border-radius:9px;background:linear-gradient(90deg,var(--kcal),var(--horm))}
+.goalbar b{position:absolute;top:-4px;width:18px;height:18px;border-radius:50%;background:var(--ink);border:3px solid var(--bg);transform:translateX(-50%)}
+.sbtn{background:#ffffff18;color:#fff;font-weight:700;padding:12px;border-radius:14px;text-align:center;cursor:pointer;position:relative}
+.sbtn.photo{display:block;font-size:14px}
+.sbtn input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.phase{display:flex;height:14px;border-radius:7px;overflow:hidden;margin-top:4px}
+.phase i{display:block;height:100%}
+/* rutinas */
+.rt{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.rt .nm b{display:block}
+.rt .nm span{font-size:12px;color:var(--muted)}
+.rt .acts{display:flex;gap:6px}
+.rt .acts button{padding:7px 10px;font-size:13px}
+.wex{background:var(--surface2);border-radius:14px;padding:12px;display:grid;gap:8px}
+.wex .last{font-size:12px;color:var(--muted)}
+.wset{display:grid;grid-template-columns:28px 1fr 1fr 40px;gap:8px;align-items:center}
+.wset input{padding:8px 10px;text-align:center}
+.wset .n{font-size:12px;color:var(--muted);text-align:center;font-weight:700}
+.wset button{padding:8px 0;background:var(--surface)}
+.wset button[aria-pressed=true]{background:var(--prot);color:#06170F}
+/* toast y celebración */
+.toast{position:fixed;left:50%;bottom:calc(var(--tabbar) + 22px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);opacity:0;z-index:30;
+  background:var(--ink);color:var(--bg);font-weight:800;padding:12px 18px;border-radius:99px;transition:.25s;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.fire{font-size:12px;font-weight:800;color:var(--kcal)}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.25)}100%{transform:scale(1)}}
+.task.done .tk.pop{animation:pop .35s ease}
+@media (prefers-reduced-motion:reduce){.toast,.task.done .tk.pop{transition:none;animation:none}}
 .legend{display:grid;gap:12px;width:100%}
 .lg{display:grid;gap:2px}
 .lg .v{font-size:20px;font-weight:800}
@@ -259,7 +293,12 @@ textarea{min-height:70px;resize:vertical}
         <svg viewBox="0 0 168 168" id="ringsSvg" role="img" aria-label="Anillos de calorías, proteína y sueño"></svg>
         <div class="legend" id="legend"></div>
       </div>
+      <div class="lvl" id="lvl"></div>
     </div>
+
+    <div class="card nowcard" id="nowCard" hidden></div>
+
+    <div class="card" id="goalCard"></div>
 
     <div class="card">
       <div class="row between"><h3>Tu plan de hoy</h3><span class="small" id="planN"></span></div>
@@ -337,9 +376,16 @@ textarea{min-height:70px;resize:vertical}
   <main class="screen" id="s-sueno" hidden>
     <h2>Sueño</h2>
     <div class="card night">
+      <div class="grid2">
+        <button class="sbtn" id="goSleep">🌙 Me voy a dormir</button>
+        <button class="sbtn" id="goWake">☀️ Me desperté</button>
+      </div>
+      <label class="sbtn photo" id="sleepPhotoLbl">📷 Foto de mi reloj o app de sueño<input type="file" id="sleepPhoto" accept="image/*"></label>
+      <div class="small" id="sleepPhotoMsg" style="color:#C9CBFF"></div>
       <div class="label" style="color:#C9CBFF">Anoche</div>
       <div class="disp bigh" id="sleepBig">—</div>
       <div class="small" id="sleepMsg" style="color:#C9CBFF"></div>
+      <div id="phases"></div>
       <div class="grid2">
         <label class="field"><span class="label" style="color:#C9CBFF">Me acosté</span><input type="time" id="bed"></label>
         <label class="field"><span class="label" style="color:#C9CBFF">Me levanté</span><input type="time" id="wake"></label>
@@ -373,6 +419,17 @@ textarea{min-height:70px;resize:vertical}
       <div class="label">Hormonas, últimos 14 días</div>
       <div class="bars" id="hBars" style="--c1:#B8862A;--c2:var(--horm);height:110px;grid-template-columns:repeat(14,1fr);gap:4px"></div>
       <div class="bx" id="hBx" style="grid-template-columns:repeat(14,1fr);gap:4px"></div>
+    </div>
+
+    <div class="card">
+      <div class="row between"><h3>Mis rutinas</h3><button class="btn-ghost small" id="newRoutine">+ Nueva rutina</button></div>
+      <form id="routineForm" class="field" hidden>
+        <input id="rName" placeholder="Nombre: Pierna, Pecho y tríceps…" required>
+        <textarea id="rEx" rows="6" placeholder="Un ejercicio por línea, con series x repeticiones:&#10;Sentadilla 4x10&#10;Peso muerto rumano 3x10&#10;Prensa 3x12" required></textarea>
+        <div class="row"><button type="submit" class="btn-main">Guardar rutina</button><button type="button" class="btn-ghost" id="rCancel">Cancelar</button></div>
+      </form>
+      <div id="routines"></div>
+      <div id="workout"></div>
     </div>
 
     <div class="card">
@@ -437,7 +494,9 @@ textarea{min-height:70px;resize:vertical}
         <label class="field"><span class="label">Actividad</span><select id="pAct">
           <option value="1.375">Liviana (1–3 días)</option><option value="1.55">Moderada (3–5 días)</option><option value="1.725">Alta (6–7 días)</option></select></label>
         <label class="field"><span class="label">Objetivo</span><select id="pGoal">
-          <option value="ganar">Ganar músculo</option><option value="mantener">Mantener</option><option value="bajar">Bajar grasa</option></select></label>
+          <option value="ganar">Ganar músculo (superávit)</option><option value="mantener">Mantener</option><option value="bajar">Bajar grasa (déficit)</option></select></label>
+        <label class="field" style="grid-column:1/-1"><span class="label">Ritmo (calorías de déficit o superávit al día)</span><select id="pPace">
+          <option value="250">Suave: 250 kcal</option><option value="300">Moderado: 300 kcal</option><option value="500">Normal: 500 kcal</option><option value="750">Rápido: 750 kcal</option></select></label>
       </div>
       <div id="targetsMsg" class="small"></div>
     </div>
@@ -481,6 +540,7 @@ textarea{min-height:70px;resize:vertical}
   </main>
 </div>
 
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="onb" id="onb" hidden><form class="in" id="onbIn" autocomplete="off"></form></div>
 
 <nav class="tabbar" aria-label="Secciones">
@@ -596,20 +656,30 @@ const setStatus = (t, ok) => { $("status").textContent = t; $("statusDot").class
 const touchDay = () => { store.save(); render(); };
 
 /* ---------- cálculos ---------- */
+// el último peso anotado manda; si no hay, el del perfil
+const lastWeight = () => { const k = Object.keys(cache).filter(x => x.startsWith("d-") && cache[x]?.weight).sort().pop(); return k ? +cache[k].weight : profile().weight; };
+const defaultPace = g => g === "bajar" ? 500 : g === "ganar" ? 300 : 0;
 function targets(){
-  const p = profile();
-  if (!p.age || !p.height || !p.weight) return null;
-  const bmr = 10*p.weight + 6.25*p.height - 5*p.age + (p.sex === "f" ? -161 : 5);
-  const kcal = Math.round(bmr*Number(p.act) + {ganar:300, mantener:0, bajar:-400}[p.goal]);
-  const prot = Math.round(p.weight*(p.goal === "bajar" ? 2 : 1.8));
+  const p = profile(), w = lastWeight();
+  if (!p.age || !p.height || !w) return null;
+  const bmr = 10*w + 6.25*p.height - 5*p.age + (p.sex === "f" ? -161 : 5);
+  const tdee = Math.round(bmr*Number(p.act));
+  const pace = p.goal === "mantener" ? 0 : (+p.pace || defaultPace(p.goal));
+  // nunca por debajo del metabolismo basal ni de 1.500 (hombre) / 1.200 (mujer)
+  const floor = Math.round(Math.max(bmr, p.sex === "f" ? 1200 : 1500));
+  const raw = tdee + (p.goal === "bajar" ? -pace : pace);
+  const kcal = Math.max(raw, floor);
+  const prot = Math.round(w*(p.goal === "bajar" ? 2 : 1.8));
   const fat = Math.round(kcal*0.28/9);
   const f = p.sex === "f";
   // metas diarias de referencia para adultos 19-30 años (IOM); azúcar y sodio son límites máximos
   return { kcal, prot, fat, carb: Math.max(0, Math.round((kcal - prot*4 - fat*9)/4)), fiber: f ? 25 : 38, sugar: 50,
            vitA: f ? 700 : 900, vitC: f ? 75 : 90, vitD: 15, b12: 2.4, folate: 400,
            calcium: 1000, iron: f ? 18 : 8, mag: f ? 310 : 400, zinc: f ? 8 : 11, potassium: f ? 2600 : 3400, sodium: 2300,
-           omega3: f ? 1.1 : 1.6, sleep: Number(p.sleep)||9 };
+           omega3: f ? 1.1 : 1.6, sleep: Number(p.sleep)||9, tdee, adj: kcal - tdee, capped: raw < floor, w };
 }
+// kg por semana que mueve el ajuste diario (7.700 kcal ≈ 1 kg de grasa)
+const kgPerWeek = t => Math.abs(t.adj)*7/7700;
 const sleepGoal = t => t?.sleep || Number(profile().sleep) || 9;
 function sleepHours(d){
   if (!d?.bed || !d?.wake) return null;
@@ -707,11 +777,12 @@ function render(){
   const name = (profile().name || "").trim().split(" ")[0], hr = new Date().getHours();
   $("hello").textContent = cur !== today ? "Ese día" : (hr < 12 ? "Buenos días" : hr < 19 ? "Buenas tardes" : "Buenas noches") + (name ? ", " + name : "");
   renderPlan(d, t);
+  renderGoal(t, tot); renderNow(); renderPhases(d); renderRoutines(); renderWorkout();
 
   // HOY: anillos
   $("ringsSvg").innerHTML = arc(84,84,74,t ? tot.kcal/t.kcal : 0,"var(--kcal)",14) + arc(84,84,56,t ? tot.prot/t.prot : 0,"var(--prot)",14) + arc(84,84,38,sh ? sh/st : 0,"var(--sleep)",14)
     + `<text x="84" y="80" text-anchor="middle" fill="var(--ink)" font-family="Unbounded,sans-serif" font-weight="700" font-size="17">${t ? fmt(Math.max(0,t.kcal - tot.kcal)) : "—"}</text>
-       <text x="84" y="97" text-anchor="middle" fill="var(--muted)" font-size="9.5" font-weight="700">KCAL QUEDAN</text>`;
+       <text x="84" y="97" text-anchor="middle" fill="var(--muted)" font-size="9" font-weight="700">QUEDAN</text>`;
   $("legend").innerHTML = legendItem("Calorías","var(--kcal)",fmt(tot.kcal),t && fmt(t.kcal),"kcal")
     + legendItem("Proteína","var(--prot)",fmt(tot.prot),t && t.prot,"g")
     + legendItem("Sueño","var(--sleep)",sh ? sh.toFixed(1) : "—",st,"h")
@@ -780,7 +851,9 @@ function render(){
   // YO
   const p = profile();
   ["pAge:age","pHeight:height","pWeight:weight","pGoalW:goalW","pSex:sex","pAct:act","pGoal:goal","pSleep:sleep"].forEach(s => { const [id,k] = s.split(":"); setVal(id, p[k]); });
-  $("targetsMsg").innerHTML = t ? `Tu meta diaria: <b>${fmt(t.kcal)} kcal</b>, <b>${t.prot} g</b> de proteína, <b>${t.carb} g</b> de carbohidratos y <b>${t.fat} g</b> de grasa. <span class="muted">Fórmula Mifflin-St Jeor ${p.goal === "ganar" ? "+300 kcal para ganar músculo" : p.goal === "bajar" ? "−400 kcal para bajar grasa" : "sin ajuste"}.</span>`
+  setVal("pPace", String(+p.pace || defaultPace(p.goal) || 300)); $("pPace").disabled = p.goal === "mantener";
+  $("targetsMsg").innerHTML = t ? `Gastas unas <b>${fmt(t.tdee)} kcal</b> al día. Tu meta: <b>${fmt(t.kcal)} kcal</b> (${t.adj < 0 ? "déficit de "+fmt(-t.adj) : t.adj > 0 ? "superávit de "+fmt(t.adj) : "sin ajuste"}), <b>${t.prot} g</b> de proteína, <b>${t.carb} g</b> de carbohidratos y <b>${t.fat} g</b> de grasa.
+      ${t.capped ? `<br><span class="warn">Subí tu meta a ${fmt(t.kcal)} kcal: comer menos que eso te quita músculo y te baja la testosterona.</span>` : ""}`
     : `<span class="warn">Llena edad, estatura y peso para calcular tus metas.</span>`;
   const L = labs().items.slice().sort((a,b) => b.date.localeCompare(a.date));
   $("labs").innerHTML = L.length ? `<div class="tablewrap"><table><thead><tr><th>Fecha</th><th>Examen</th><th>Valor</th><th>Referencia</th><th></th></tr></thead><tbody>${
@@ -959,6 +1032,8 @@ async function coach(){
   const prompt = `Eres entrenador personal y nutricionista. Hablas español de Colombia, de tú, directo y sencillo. La persona quiere mejorar su salud, su sueño y sus hormonas (testosterona) con hábitos.
 Perfil: ${p.sex === "f" ? "mujer" : "hombre"}, ${p.age ?? "?"} años, ${p.height ?? "?"} cm, ${p.weight ?? "?"} kg, meta ${p.goalW ?? "?"} kg, objetivo: ${p.goal}.
 Metas diarias: ${t ? NKEYS.map(k => k+" "+t[k]).join(", ") : "sin calcular (faltan datos del perfil)"}.
+${t ? `Gasta unas ${t.tdee} kcal al día; su meta es ${t.adj < 0 ? "un déficit de " + (-t.adj) : t.adj > 0 ? "un superávit de " + t.adj : "mantener"} kcal. Peso actual ${t.w} kg.` : ""}
+Entrenamiento de hoy: ${d.workout ? d.workout.name + ": " + Object.entries(d.workout.sets).map(([n,S]) => n + " " + S.filter(s => s?.done).map(s => (s.kg||0) + "kg×" + (s.reps||0)).join("/")).join("; ") : "ninguno con rutina"}. Sus rutinas: ${routines().items.map(r => r.name).join(", ")}.
 Hoy (${cur}) lleva: ${NKEYS.map(k => k+" "+r1(tot[k])).join(", ")}. Comidas: ${d.meals.map(m => m.name).join(", ") || "ninguna"}. Agua: ${d.water} vasos.
 Ejercicio hoy: ${d.exType || "nada"} ${d.exMin ? d.exMin+" min" : ""} ${d.trainType || ""}. Pasos: ${d.steps ?? "?"}. Sol: ${d.sun ?? 0} min. Alcohol: ${d.alcohol ? "sí" : "no"}.
 Sueño anoche: ${sh ? sh.toFixed(1)+" h (se acostó "+d.bed+")" : "sin registrar"}, meta ${sleepGoal(t)} h. Energía ${d.energy||"?"}/5, ánimo ${d.mood||"?"}/5, ansiedad ${d.anxiety||"?"}/5, libido ${d.libido||"?"}/5. Café después de las 2 p.m.: ${d.lateCaffeine ? "sí" : "no"}. Pantallas antes de dormir: ${d.screensOff ? "no" : "sí o sin anotar"}. Suplementos: ${(d.supps||[]).join(", ") || "ninguno"}.
@@ -1050,8 +1125,12 @@ bindDay("screensOff","screensOff","check"); bindDay("earlyDinner","earlyDinner",
 bindDay("waist","waist","num"); bindDay("chest","chest","num"); bindDay("arm","arm","num");
 $("suppPills").onclick = e => { const b = e.target.closest("[data-sup]"); if (!b) return; const d = getDay(), s = new Set(d.supps || []);
   s.has(b.dataset.sup) ? s.delete(b.dataset.sup) : s.add(b.dataset.sup); d.supps = [...s]; touchDay(); }; bindDay("weight","weight","num"); bindDay("notes","notes");
-[["pAge","age",1],["pHeight","height",1],["pWeight","weight",1],["pGoalW","goalW",1],["pSex","sex"],["pAct","act"],["pGoal","goal"],["pSleep","sleep",1]].forEach(([id,k,num]) =>
-  $(id).addEventListener("input", e => { profile()[k] = num ? (e.target.value === "" ? null : +e.target.value) : e.target.value; store.save("profile"); render(); }));
+[["pAge","age",1],["pHeight","height",1],["pWeight","weight",1],["pGoalW","goalW",1],["pSex","sex"],["pAct","act"],["pGoal","goal"],["pSleep","sleep",1],["pPace","pace",1]].forEach(([id,k,num]) =>
+  $(id).addEventListener("input", e => { const p = profile(); p[k] = num ? (e.target.value === "" ? null : +e.target.value) : e.target.value;
+    // al cambiar de meta, la barra de avance arranca desde el peso de hoy
+    if (k === "goal" || k === "goalW") p.startW = lastWeight();
+    if (k === "goal") p.pace = defaultPace(p.goal) || p.pace;
+    store.save(); render(); }));
 $("wakeGoal").addEventListener("change", e => { if (e.target.value) { profile().wakeGoal = e.target.value; store.save("profile"); render(); } });
 $("labForm").onsubmit = e => { e.preventDefault();
   labs().items.push({id:Date.now().toString(36), date:$("lDate").value, name:$("lName").value.trim(), val:$("lVal").value.trim(), unit:$("lUnit").value.trim(), ref:$("lRef").value.trim()});
@@ -1065,6 +1144,7 @@ $("lDate").value = cur;
 /* ---------- plan de hoy: lo que falta, de un toque ---------- */
 // set: marca la tarea desde aquí; go: lleva a la pantalla donde se anota
 function planTasks(d){
+  d = {...blankDay(), ...d};
   const sh = sleepHours(d);
   return [
     {k:"sleep", t:"Anotar cómo dormiste", s:"Hora de acostarte y levantarte", done: sh != null, go:"sueno"},
@@ -1079,20 +1159,203 @@ function planTasks(d){
     {k:"coach", t:"Pedir consejo al entrenador", s:"Al final del día", done: !!d.advice, go:"coach"},
   ];
 }
+// días seguidos cumpliendo una tarea; si hoy aún no, cuenta desde ayer para no "romper" la racha antes de tiempo
+function taskStreak(k){
+  let s = cur, n = 0;
+  const done = id => planTasks(day(id) || blankDay()).find(t => t.k === k)?.done;
+  if (!done(s)) s = shift(s,-1);
+  while (done(s)) { n++; s = shift(s,-1); }
+  return n;
+}
+// 10 puntos por tarea cumplida, 50 extra por día perfecto; un nivel cada 500
+function xpTotal(){
+  return Object.keys(cache).filter(k => k.startsWith("d-")).reduce((a,k) => {
+    const ts = planTasks(cache[k]), n = ts.filter(t => t.done).length;
+    return a + n*10 + (n === ts.length ? 50 : 0);
+  }, 0);
+}
+const LEVELS = ["Arrancando","Constante","Disciplinado","Máquina","Bestia","Leyenda"];
+let lastDone = null, popKey = null;
 function renderPlan(d){
   const ts = planTasks(d), n = ts.filter(x => x.done).length;
   $("planN").innerHTML = `<b class="${n === ts.length ? "ok" : "warn"}">${n}</b><span class="muted"> de ${ts.length}</span>`;
-  $("plan").innerHTML = ts.slice().sort((a,b) => a.done - b.done).map(x =>
-    `<button class="task ${x.done ? "done" : ""}" data-task="${x.k}"><span class="tk">${x.done ? "✓" : ""}</span><span class="tx">${x.t}<small>${esc(x.s || "")}</small></span><span class="go">${x.set ? "" : "›"}</span></button>`).join("");
+  $("plan").innerHTML = ts.slice().sort((a,b) => a.done - b.done).map(x => { const st = taskStreak(x.k);
+    return `<button class="task ${x.done ? "done" : ""}" data-task="${x.k}"><span class="tk ${popKey === x.k ? "pop" : ""}">${x.done ? "✓" : ""}</span><span class="tx">${x.t}<small>${esc(x.s || "")}</small></span><span class="go">${st >= 2 ? `<span class="fire">🔥${st}</span>` : x.set ? "" : "›"}</span></button>`; }).join("");
+  popKey = null;
+  const xp = xpTotal(), lv = Math.floor(xp/500), into = xp % 500;
+  $("lvl").innerHTML = `<div class="top2"><span>Nivel ${lv+1} · ${LEVELS[Math.min(lv, LEVELS.length-1)]}</span><span class="muted">${into} / 500 puntos</span></div><div class="bar"><i style="width:${into/5}%;background:linear-gradient(90deg,var(--horm),var(--kcal))"></i></div>`;
+  // celebra cuando el día pasa a perfecto
+  if (lastDone !== null && cur === iso(new Date()) && n === ts.length && lastDone < n) toast("¡Día perfecto! +50 puntos 🏆");
+  lastDone = n;
 }
+let toastT;
+function toast(msg){ const t = $("toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), 2600); }
 $("plan").onclick = e => {
   const b = e.target.closest("[data-task]"); if (!b) return;
   const x = planTasks(getDay()).find(t => t.k === b.dataset.task); if (!x) return;
-  if (x.set) { x.set(getDay()); touchDay(); return; }
+  if (x.set) {
+    x.set(getDay());
+    const now = planTasks(getDay()).find(t => t.k === x.k);
+    if (now.done && !x.done) { popKey = x.k; const st = taskStreak(x.k); toast(`+10 puntos${st >= 2 ? " · 🔥 " + st + " días seguidos" : ""}`); }
+    touchDay(); return;
+  }
   if (x.go === "foto") { if (ai.key()) $("photo").click(); else show("comida"); return; }
   if (x.go === "coach") { $("coachBtn").scrollIntoView({behavior:"smooth", block:"center"}); return; }
   show(x.go);
 };
+
+/* ---------- meta de peso y calorías ---------- */
+function renderGoal(t, tot){
+  const p = profile(), el = $("goalCard");
+  if (!t) { el.innerHTML = `<h3>Tu meta</h3><p class="muted small">Llena tu edad, estatura y peso para calcular tus calorías y la fecha en que llegas a tu meta.</p><button class="btn-main" data-goto="yo">Poner mis datos</button>`; return; }
+  const w = t.w, gw = +p.goalW || null, start = +p.startW || w;
+  const verb = p.goal === "bajar" ? "Bajar" : p.goal === "ganar" ? "Subir" : "Mantener";
+  const wrongWay = gw && ((p.goal === "bajar" && gw > w) || (p.goal === "ganar" && gw < w));
+  let eta = "";
+  if (gw && !wrongWay && p.goal !== "mantener" && Math.abs(gw - w) > 0.2) {
+    const wk = kgPerWeek(t), weeks = Math.abs(gw - w)/wk, dt = new Date(); dt.setDate(dt.getDate() + Math.round(weeks*7));
+    eta = `≈ ${r1(wk).toString().replace(".", ",")} kg por semana · llegas más o menos el <b>${dt.getDate()} de ${MONTHS[dt.getMonth()]}${dt.getFullYear() !== new Date().getFullYear() ? " de " + dt.getFullYear() : ""}</b>`;
+  }
+  const span = gw ? Math.abs(gw - start) || 1 : 1, prog = gw ? Math.max(0, Math.min(1, Math.abs(w - start)/span)) : 0;
+  const left = t.kcal - tot.kcal;
+  const today = cur === iso(new Date());
+  el.innerHTML = `<div class="row between"><h3>${verb}${gw && p.goal !== "mantener" ? " a " + gw + " kg" : " tu peso"}</h3><span class="small muted">${t.adj < 0 ? "déficit" : t.adj > 0 ? "superávit" : "equilibrio"} ${t.adj ? fmt(Math.abs(t.adj)) + " kcal/día" : ""}</span></div>
+    ${gw && p.goal !== "mantener" ? `<div class="goalbar"><i style="width:${prog*100}%"></i><b style="left:${prog*100}%"></b></div>
+    <div class="row between small"><span class="muted">Empezaste: ${r1(start)} kg</span><b>Ahora: ${r1(w)} kg</b><span class="muted">Meta: ${gw} kg</span></div>` : ""}
+    ${wrongWay ? `<p class="small warn">Tu peso meta va al revés de tu objetivo. Cámbialo en Perfil.</p>` : eta ? `<p class="small">${eta}</p>` : ""}
+    <div class="stats"><div class="stat"><span class="label">Gastas</span><span class="v">${fmt(t.tdee)}</span><span class="small muted">kcal al día</span></div>
+    <div class="stat"><span class="label">${today ? "Te quedan hoy" : "Ese día"}</span><span class="v ${left < 0 ? "bad" : "ok"}">${left < 0 ? "+" + fmt(-left) : fmt(left)}</span><span class="small muted">${left < 0 ? "kcal de más" : "kcal para tu meta"}</span></div></div>`;
+}
+
+/* ---------- sueño: un toque al acostarte y al despertar ---------- */
+const nowHHMM = () => { const d = new Date(); return pad(d.getHours()) + ":" + pad(d.getMinutes()); };
+const dayFor = id => cache["d-"+id] || (cache["d-"+id] = blankDay());
+// la hora de acostarse se guarda en el día siguiente ("anoche"), salvo que ya sea madrugada
+function markSleep(){
+  const h = new Date().getHours(), id = h >= 12 ? shift(iso(new Date()), 1) : iso(new Date());
+  dayFor(id).bed = nowHHMM(); dayFor(id).wake = ""; store.save(); render();
+  toast("Buenas noches 🌙 Mañana toca 'Me desperté'");
+}
+function markWake(){
+  const d = dayFor(iso(new Date())); d.wake = nowHHMM(); store.save();
+  if (cur !== iso(new Date())) cur = iso(new Date());
+  render(); const sh = sleepHours(d);
+  toast(sh ? `Dormiste ${Math.floor(sh)} h ${pad(Math.round((sh%1)*60))} min ☀️` : "Anotado ☀️ Pon a qué hora te acostaste");
+}
+function renderNow(){
+  const h = new Date().getHours(), today = iso(new Date()), el = $("nowCard");
+  const tonight = day(h >= 12 ? shift(today,1) : today), td = day(today);
+  if (cur === today && (h >= 20 || h < 4) && !tonight?.bed) {
+    el.innerHTML = `<div class="row between"><h3>¿Ya te vas a dormir?</h3><span class="small muted">${toHHMM(toMin(nowHHMM()))}</span></div><button class="sbtn" data-now="sleep">🌙 Me voy a dormir</button>`; el.hidden = false;
+  } else if (cur === today && h >= 4 && h < 13 && td?.bed && !td?.wake) {
+    el.innerHTML = `<div class="row between"><h3>Buenos días</h3><span class="small muted">te acostaste ${toHHMM(toMin(td.bed))}</span></div><button class="sbtn" data-now="wake">☀️ Me desperté</button>`; el.hidden = false;
+  } else el.hidden = true;
+}
+$("nowCard").onclick = e => { const b = e.target.closest("[data-now]"); if (!b) return; b.dataset.now === "sleep" ? markSleep() : markWake(); };
+$("goSleep").onclick = markSleep;
+$("goWake").onclick = markWake;
+function renderPhases(d){
+  const s = d.sleepDetail;
+  if (!s) { $("phases").innerHTML = ""; return; }
+  const P = [["Profundo","deep","#5B5CE0"],["Ligero","light","#8B8CFF"],["REM","rem","#4CB8FF"],["Despierto","awake","#FF7A45"]].filter(x => s[x[1]]);
+  const tot = P.reduce((a,x) => a + s[x[1]], 0) || 1;
+  $("phases").innerHTML = `<div class="phase">${P.map(x => `<i style="width:${s[x[1]]/tot*100}%;background:${x[2]}"></i>`).join("")}</div>
+    <div class="row small" style="color:#C9CBFF;margin-top:6px;gap:12px">${P.map(x => `<span><i class="sw" style="background:${x[2]};display:inline-block;margin-right:4px"></i>${x[0]} ${Math.floor(s[x[1]]/60)}h${pad(s[x[1]]%60)}</span>`).join("")}${s.score ? `<span>Puntaje ${s.score}</span>` : ""}</div>`;
+}
+$("sleepPhoto").addEventListener("change", async e => {
+  const f = e.target.files?.[0]; e.target.value = ""; if (!f) return;
+  if (!ai.key()) { $("sleepPhotoMsg").textContent = "Primero conecta Gemini en Perfil → Ajustes."; return; }
+  $("sleepPhotoMsg").textContent = "Gemini está leyendo tu sueño…";
+  try {
+    const r = await ai.json(`Es una captura o foto de una app o reloj que mide el sueño (Mi Fitness, Zepp, Samsung Health, Google Fit, Sleep as Android, Fitbit u otra). Lee la noche que muestra.
+Responde SOLO JSON: {"bed":"23:10","wake":"06:40","deep":95,"light":210,"rem":80,"awake":15,"score":82}
+bed y wake en formato 24 horas; deep, light, rem y awake en minutos; score de 0 a 100. Usa null en lo que no aparezca.`, f);
+    const d = getDay(), hm = v => typeof v === "string" && /^\d{1,2}:\d{2}$/.test(v) ? v.padStart(5, "0") : null;
+    if (hm(r.bed)) d.bed = hm(r.bed); if (hm(r.wake)) d.wake = hm(r.wake);
+    d.sleepDetail = Object.fromEntries(["deep","light","rem","awake","score"].map(k => [k, Math.max(0, Math.round(+r[k] || 0))]));
+    store.save(); render();
+    $("sleepPhotoMsg").textContent = hm(r.bed) ? "Listo, sueño anotado desde la foto." : "Leí las fases, pero no la hora. Ponla abajo.";
+  } catch (err) { $("sleepPhotoMsg").textContent = errMsg(err); }
+});
+
+/* ---------- mis rutinas de ejercicio ---------- */
+const DEFAULT_ROUTINES = [
+  {id:"empuje", name:"Empuje (pecho, hombro, tríceps)", ex:[["Press de banca",4,8],["Press militar",3,10],["Fondos",3,10],["Aperturas",3,12],["Extensión de tríceps",3,12]]},
+  {id:"jalon", name:"Jalón (espalda, bíceps)", ex:[["Dominadas",4,8],["Remo con barra",4,10],["Jalón al pecho",3,12],["Curl de bíceps",3,12],["Face pull",3,15]]},
+  {id:"pierna", name:"Pierna", ex:[["Sentadilla",4,8],["Peso muerto rumano",3,10],["Prensa",3,12],["Zancadas",3,10],["Pantorrilla",4,15]]},
+];
+const routines = () => cache.routines || (cache.routines = {items: structuredClone(DEFAULT_ROUTINES)});
+let editingRoutine = null;
+function renderRoutines(){
+  const R = routines().items;
+  $("routines").innerHTML = R.length ? R.map(r => `<div class="rt"><div class="nm"><b>${esc(r.name)}</b><span>${r.ex.map(x => esc(x[0])).join(" · ")}</span></div>
+    <div class="acts"><button class="btn-main" data-rgo="${r.id}">Entrenar</button><button class="btn-ghost" data-redit="${r.id}" aria-label="Editar ${esc(r.name)}">✎</button></div></div>`).join("")
+    : `<div class="empty">No tienes rutinas. Crea la tuya con "+ Nueva rutina".</div>`;
+}
+// el último entrenamiento antes de hoy donde aparece ese ejercicio
+function lastSets(name){
+  const k = Object.keys(cache).filter(x => x.startsWith("d-") && x < "d-"+cur && cache[x]?.workout?.sets?.[name]?.some(s => s.done)).sort().pop();
+  return k ? {date:k.slice(2), sets:cache[k].workout.sets[name].filter(s => s.done)} : null;
+}
+function renderWorkout(){
+  const w = day()?.workout, box = $("workout");
+  if (box.contains(document.activeElement)) return;
+  if (!w || w.finished) { box.innerHTML = w?.finished ? `<p class="small ok">✓ Entrenaste ${esc(w.name)} hoy · ${fmt(w.volume || 0)} kg levantados en total.</p>` : ""; return; }
+  box.innerHTML = `<div class="row between" style="margin-top:6px"><h3>${esc(w.name)}</h3><button class="btn-ghost small" id="wCancel">Cancelar</button></div>
+    ${w.plan.map(([n,sets,reps]) => { const last = lastSets(n), S = w.sets[n] || [];
+      return `<div class="wex"><b>${esc(n)}</b><span class="last">${last ? `La vez pasada (${last.date.slice(8)}/${last.date.slice(5,7)}): ${last.sets.map(s => (s.kg || 0) + " kg × " + (s.reps || 0)).join(", ")}` : `Meta: ${sets} series de ${reps}`}</span>
+      ${Array.from({length:sets}, (_,i) => { const s = S[i] || {}; return `<div class="wset"><span class="n">${i+1}</span>
+        <input type="number" inputmode="decimal" step="0.5" min="0" placeholder="${last?.sets[i]?.kg ?? "kg"}" value="${s.kg ?? ""}" data-w="${esc(n)}" data-i="${i}" data-f="kg" aria-label="${esc(n)} serie ${i+1} kilos">
+        <input type="number" inputmode="numeric" min="0" placeholder="${reps} reps" value="${s.reps ?? ""}" data-w="${esc(n)}" data-i="${i}" data-f="reps" aria-label="${esc(n)} serie ${i+1} repeticiones">
+        <button data-wdone="${esc(n)}" data-i="${i}" aria-pressed="${!!s.done}" aria-label="Serie ${i+1} hecha">✓</button></div>`; }).join("")}</div>`; }).join("")}
+    <button class="btn-main big" id="wFinish">Terminar entrenamiento</button>`;
+}
+$("routines").onclick = e => {
+  const go = e.target.closest("[data-rgo]"), ed = e.target.closest("[data-redit]");
+  if (go) { const r = routines().items.find(x => x.id === go.dataset.rgo); getDay().workout = {rid:r.id, name:r.name, plan:structuredClone(r.ex), sets:{}, start:nowHHMM()}; store.save(); renderWorkout(); $("workout").scrollIntoView({behavior:"smooth"}); }
+  if (ed) { const r = routines().items.find(x => x.id === ed.dataset.redit); editingRoutine = r.id; $("rName").value = r.name; $("rEx").value = r.ex.map(x => `${x[0]} ${x[1]}x${x[2]}`).join("\n"); $("routineForm").hidden = false; $("rCancel").textContent = "Borrar rutina"; $("rName").focus(); }
+};
+$("newRoutine").onclick = () => { editingRoutine = null; $("routineForm").reset(); $("rCancel").textContent = "Cancelar"; $("routineForm").hidden = false; $("rName").focus(); };
+$("rCancel").onclick = () => {
+  if (editingRoutine && $("rCancel").textContent === "Borrar rutina") { const R = routines(); R.items = R.items.filter(x => x.id !== editingRoutine); store.save(); render(); }
+  editingRoutine = null; $("routineForm").hidden = true;
+};
+$("routineForm").onsubmit = e => {
+  e.preventDefault();
+  // "Sentadilla 4x10" → [nombre, series, reps]; sin números = 3x10
+  const ex = $("rEx").value.split("\n").map(l => l.trim()).filter(Boolean).map(l => { const m = l.match(/^(.*?)[\s:-]*(\d+)\s*[x×*]\s*(\d+)\s*$/i); return m ? [m[1].trim(), Math.min(10, +m[2]), +m[3]] : [l, 3, 10]; });
+  if (!ex.length) return;
+  const R = routines(), name = $("rName").value.trim();
+  if (editingRoutine) Object.assign(R.items.find(x => x.id === editingRoutine), {name, ex});
+  else R.items.push({id:Date.now().toString(36), name, ex});
+  editingRoutine = null; $("routineForm").hidden = true; store.save(); render(); toast("Rutina guardada 💪");
+};
+$("workout").addEventListener("change", e => {
+  const el = e.target; if (!el.dataset.w) return;
+  const w = getDay().workout, S = w.sets[el.dataset.w] || (w.sets[el.dataset.w] = []);
+  const s = S[+el.dataset.i] || (S[+el.dataset.i] = {});
+  s[el.dataset.f] = el.value === "" ? null : +el.value; store.save();
+});
+$("workout").addEventListener("click", e => {
+  const d = getDay(), w = d.workout; if (!w) return;
+  const b = e.target.closest("[data-wdone]");
+  if (b) {
+    const S = w.sets[b.dataset.wdone] || (w.sets[b.dataset.wdone] = []), s = S[+b.dataset.i] || (S[+b.dataset.i] = {});
+    // si no escribió nada, usa lo de la vez pasada o la meta
+    const last = lastSets(b.dataset.wdone)?.sets[+b.dataset.i], plan = w.plan.find(x => x[0] === b.dataset.wdone);
+    if (s.kg == null && last?.kg != null) s.kg = last.kg;
+    if (s.reps == null) s.reps = last?.reps ?? plan?.[2];
+    s.done = !s.done; store.save(); renderWorkout(); return;
+  }
+  if (e.target.id === "wCancel") { delete d.workout; store.save(); render(); }
+  if (e.target.id === "wFinish") {
+    const vol = Object.values(w.sets).flat().filter(s => s?.done).reduce((a,s) => a + (s.kg||0)*(s.reps||0), 0);
+    w.finished = true; w.volume = Math.round(vol); d.exType = "fuerza"; d.trainType = w.name;
+    const [sh, sm] = w.start.split(":").map(Number), mins = Math.round((Date.now() - new Date().setHours(sh, sm, 0, 0))/60000);
+    if (!d.exMin && mins > 0 && mins < 300) d.exMin = mins;
+    touchDay(); toast(`Entrenamiento guardado · ${fmt(vol)} kg 💪`);
+  }
+});
 
 /* ---------- bienvenida (primera vez) ---------- */
 const ONB = KEY + "-onb";
@@ -1144,6 +1407,7 @@ $("onbIn").onsubmit = async e => {
     const p = profile();
     p.name = $("oName").value.trim(); p.age = +$("oAge").value || null; p.weight = +$("oW").value || null;
     p.height = +$("oH").value || null; p.goalW = +$("oGW").value || null; p.goal = $("oGoal").value;
+    p.startW = p.weight; p.pace = p.pace || defaultPace(p.goal);
     store.save(); render(); onbStep = ai.key() ? 2 : 1; renderOnb(); return;
   }
   if (onbStep === 1) { if (await tryKey()) { onbStep = 2; renderOnb(); } return; }
