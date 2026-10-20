@@ -197,6 +197,22 @@ textarea{min-height:70px;resize:vertical}
 .camtab input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
 .status{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px}
 .install{background:linear-gradient(135deg,var(--kcal),#FF4F7B);color:#fff}
+.horms{display:grid;gap:8px}
+.horm{background:var(--surface2);border-radius:14px;padding:12px 14px}
+.horm summary{display:grid;gap:6px}
+.horm summary::after{content:none}
+.horm .hd{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.horm .hd b{font-size:15px}
+.horm .hd span{font-weight:800}
+.horm .why{font-size:13px;color:var(--muted);margin:10px 0 6px}
+.fac{display:grid;grid-template-columns:20px 1fr;gap:4px 8px;padding:7px 0;border-top:1px solid var(--line);font-size:13.5px}
+.fac .ic2{font-weight:800;text-align:center}
+.fac .tip{grid-column:2;color:var(--muted);font-size:12.5px}
+.cmp{width:100%;border-collapse:collapse;font-size:13.5px}
+.cmp th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);text-align:right;padding:6px 4px;font-weight:700}
+.cmp th:first-child,.cmp td:first-child{text-align:left}
+.cmp td{padding:8px 4px;border-top:1px solid var(--line);text-align:right;white-space:nowrap}
+.cmp td b{font-weight:800}
 </style>
 </head>
 <body>
@@ -229,9 +245,10 @@ textarea{min-height:70px;resize:vertical}
     <div class="card">
       <div class="gauge">
         <svg viewBox="0 0 110 64" id="gaugeSvg" aria-hidden="true"></svg>
-        <div><div class="label">Hábitos hormonales</div><div class="disp" style="font-size:28px" id="scoreV">0</div><div class="small muted" id="scoreL"></div></div>
+        <div><div class="label">Tus hormonas hoy</div><div class="disp" style="font-size:28px" id="scoreV">0</div><div class="small muted" id="scoreL"></div></div>
       </div>
-      <div class="chips" id="hchips"></div>
+      <div class="horms" id="horms"></div>
+      <p class="note">Toca cada hormona para ver qué la sube y qué te falta hoy. Esto mide tus hábitos, no la hormona en sangre: para eso está el examen de sangre.</p>
     </div>
 
     <div class="card coach">
@@ -304,6 +321,8 @@ textarea{min-height:70px;resize:vertical}
         <label class="field"><span class="label" style="color:#C9CBFF">Me levanté</span><input type="time" id="wake"></label>
       </div>
       <div class="field"><span class="label" style="color:#C9CBFF">Cómo dormí</span><div class="scale" id="sleepQ"></div></div>
+      <label class="switch"><span>Sin pantallas 1 h antes de dormir</span><input type="checkbox" id="screensOff"></label>
+      <label class="switch"><span>Cené 2 h o más antes de dormir</span><input type="checkbox" id="earlyDinner"></label>
     </div>
 
     <div class="card">
@@ -325,6 +344,14 @@ textarea{min-height:70px;resize:vertical}
   <main class="screen" id="s-cuerpo" hidden>
     <h2>Cuerpo</h2>
     <div class="card">
+      <div class="row between"><h3>Tu progreso</h3><span class="small" id="streak"></span></div>
+      <div class="tablewrap"><table class="cmp" id="cmp"></table></div>
+      <div class="label">Hormonas, últimos 14 días</div>
+      <div class="bars" id="hBars" style="--c1:#B8862A;--c2:var(--horm);height:110px;grid-template-columns:repeat(14,1fr);gap:4px"></div>
+      <div class="bx" id="hBx" style="grid-template-columns:repeat(14,1fr);gap:4px"></div>
+    </div>
+
+    <div class="card">
       <h3>Ejercicio de hoy</h3>
       <div class="pills" id="exPills"></div>
       <div class="grid2">
@@ -337,9 +364,11 @@ textarea{min-height:70px;resize:vertical}
     <div class="card">
       <h3>Hormonas y hábitos</h3>
       <div class="grid2">
-        <label class="field"><span class="label">Sol directo (min)</span><input type="number" id="sun" min="0"></label>
+        <label class="field"><span class="label">Sol de mañana (min)</span><input type="number" id="sun" min="0"></label>
         <div class="field"><span class="label">&nbsp;</span><label class="switch"><span>Tomé alcohol</span><input type="checkbox" id="alcohol"></label></div>
       </div>
+      <label class="switch"><span>Tomé café después de las 2 p.m.</span><input type="checkbox" id="lateCaffeine"></label>
+      <div class="field"><span class="label">Suplementos de hoy</span><div class="pills" id="suppPills"></div></div>
       <div class="field"><span class="label">Energía</span><div class="scale" id="energy"></div></div>
       <div class="field"><span class="label">Ánimo</span><div class="scale" id="mood"></div></div>
       <div class="field"><span class="label">Ansiedad</span><div class="scale" id="anxiety"></div></div>
@@ -351,6 +380,17 @@ textarea{min-height:70px;resize:vertical}
       <div class="row between"><h3>Peso</h3><span class="small" id="weightMsg"></span></div>
       <label class="field" style="max-width:180px"><span class="label">Peso hoy (kg)</span><input type="number" id="weight" min="30" step="0.1"></label>
       <div class="chart" id="wChart"></div>
+    </div>
+
+    <div class="card">
+      <h3>Medidas</h3>
+      <p class="note">Mídete una vez por semana, en la mañana y en ayunas. La cinta en la parte más ancha del brazo flexionado y del pecho, y la cintura a la altura del ombligo.</p>
+      <div class="grid2" style="grid-template-columns:1fr 1fr 1fr">
+        <label class="field"><span class="label">Cintura cm</span><input type="number" id="waist" min="40" step="0.5"></label>
+        <label class="field"><span class="label">Pecho cm</span><input type="number" id="chest" min="40" step="0.5"></label>
+        <label class="field"><span class="label">Brazo cm</span><input type="number" id="arm" min="15" step="0.5"></label>
+      </div>
+      <div class="stats" id="measStats"></div>
     </div>
 
     <div class="card">
@@ -551,20 +591,73 @@ function sleepHours(d){
   let h = (wh*60+wm - bh*60-bm)/60; if (h <= 0) h += 24; return h;
 }
 const totals = d => (d?.meals||[]).reduce((a,m) => { NKEYS.forEach(k => a[k] += +m[k]||0); return a; }, Object.fromEntries(NKEYS.map(k => [k,0])));
-function habits(d, t){
-  const tot = totals(d), sh = sleepHours(d), st = sleepGoal(t);
-  const r = (v,goal) => Math.max(0, Math.min(1, v/goal));
-  return [
-    ["Sueño", sh == null ? 0 : r(sh,st), 30],
-    ["Fuerza", isStrength(d) ? 1 : d.exType === "descanso" ? 0.5 : 0, 20],
-    ["Sol 15 min", r(d.sun||0,15), 15],
-    ["Proteína", t ? r(tot.prot,t.prot) : 0, 15],
-    ["Estrés bajo", d.anxiety ? (5-d.anxiety)/4 : 0, 10],
-    ["Sin alcohol", d.alcohol ? 0 : 1, 10],
-  ];
-}
-const score = (d,t) => Math.round(habits(d,t).reduce((a,h) => a + h[1]*h[2], 0));
 const toMin = s => { const [h,m] = s.split(":").map(Number); return h*60+m; };
+// minutos contados desde el mediodía, para que 11 p.m. y 1 a.m. queden cerca
+const nightMin = s => { const m = toMin(s); return m < 720 ? m+1440 : m; };
+function bedRegularity(id){
+  const beds = Array.from({length:7}, (_,i) => day(shift(id, i-6))).filter(x => x?.bed).map(x => nightMin(x.bed));
+  if (beds.length < 3) return null;
+  const avg = beds.reduce((a,b) => a+b, 0)/beds.length, sd = Math.sqrt(beds.reduce((a,b) => a+(b-avg)**2, 0)/beds.length);
+  return sd < 30 ? 1 : sd < 60 ? 0.5 : 0;
+}
+const SUPPS = [["creatina","Creatina"],["vitD","Vitamina D"],["mag","Magnesio"],["omega3","Omega-3"],["zinc","Zinc"]];
+// Cada hormona = factores de hábito con peso. val: 0..1, null = sin anotar (cuenta como 0)
+function hormones(d, t, id){
+  const tot = totals(d), sh = sleepHours(d), st = sleepGoal(t), S = d.supps || [];
+  const r = (v,g) => Math.max(0, Math.min(1, v/g));
+  const before = hhmm => d.bed ? nightMin(d.bed) <= nightMin(hhmm) : null;
+  const yn = v => v == null ? null : v ? 1 : 0;
+  const sleepF = sh == null ? null : r(sh, st), sleep7 = sh == null ? null : r(sh, 7);
+  const sunF = d.sun == null ? null : r(d.sun, 15);
+  const stress = d.anxiety ? (5-d.anxiety)/4 : null;
+  const sugarOk = t && d.meals.length ? (tot.sugar <= t.sugar ? 1 : 0) : null;
+  const hard = isStrength(d) || ["futbol","cardio"].includes(d.exType) ? 1 : d.exType ? 0 : null;
+  const F = (n, val, w, tip) => ({n, val, w, tip});
+  const H = [
+    {n:"Testosterona", color:"var(--kcal)", why:"Músculo, fuerza, energía, libido y ánimo.", f:[
+      F("Dormir tus horas", sleepF, 3, "Casi toda la testosterona se fabrica durmiendo. Dormir 5 h en vez de 8 la baja cerca de 15%."),
+      F("Entrenar fuerza", isStrength(d) ? 1 : d.exType === "descanso" ? 0.5 : d.exType ? 0 : null, 2, "Pesas con ejercicios grandes: sentadilla, peso muerto, press de banca, dominadas, remo."),
+      F("Zinc a la meta", S.includes("zinc") ? 1 : t && d.meals.length ? r(tot.zinc, t.zinc) : null, 1, "Carne de res, hígado, huevo, fríjoles, maní, semillas de calabaza."),
+      F("Vitamina D (sol o comida)", S.includes("vitD") ? 1 : Math.max(sunF ?? 0, t ? r(tot.vitD, t.vitD) : 0) || (d.sun == null ? null : 0), 1, "15-20 minutos de sol directo en brazos y cara, mejor antes de las 11 a.m."),
+      F("Grasas suficientes", t && d.meals.length ? r(tot.fat, t.fat*0.8) : null, 1, "Comer muy poca grasa baja la testosterona. Huevo entero, aguacate, carne, maní, aceite de oliva."),
+      F("Sin alcohol", d.alcohol ? 0 : 1, 1, "El alcohol la baja hasta por varios días."),
+      F("Estrés bajo", stress, 1, "Cuando el cortisol sube, la testosterona baja."),
+    ]},
+    {n:"Hormona de crecimiento", color:"var(--prot)", why:"Repara el músculo, quema grasa y ayuda a recuperarte. Sale sobre todo en las primeras horas de sueño profundo. Ojo: la estatura ya no aumenta cuando se cierran los cartílagos de crecimiento (más o menos entre los 18 y 21 años); desde ahí sirve para músculo, grasa y recuperación.", f:[
+      F("Dormir tus horas", sleepF, 3, "El pico más grande sale en el primer sueño profundo de la noche."),
+      F("Acostarte antes de las 10:30 p.m.", d.bed ? (before("22:30") ? 1 : before("23:30") ? 0.5 : 0) : null, 2, "Más temprano = más sueño profundo = más hormona de crecimiento."),
+      F("Cenar 2 h o más antes de dormir", yn(d.earlyDinner), 2, "Si te acuestas lleno, la insulina alta frena la hormona de crecimiento."),
+      F("Entrenar duro", hard, 2, "Series pesadas, sprints o un partido intenso la suben."),
+      F("Proteína a la meta", t && d.meals.length ? r(tot.prot, t.prot) : null, 1, "La proteína es el material para reparar y crecer el músculo."),
+      F("Azúcar bajo el límite", sugarOk, 1, "Mucha azúcar mantiene la insulina alta y frena esta hormona."),
+    ]},
+    {n:"Cortisol bajo control", color:"var(--bad)", why:"La hormona del estrés. Alta todo el día te quita músculo, sueño y testosterona, y te hace guardar grasa en la barriga.", f:[
+      F("Ansiedad baja", stress, 3, "5 minutos de respiración lenta (4 segundos inhalar, 6 exhalar), caminar sin celular, escribir lo que te preocupa."),
+      F("Dormir 7 h o más", sleep7, 2, "Dormir poco sube el cortisol al otro día."),
+      F("Sol de mañana", d.sun == null ? null : r(d.sun, 10), 1, "La luz al despertar pone el cortisol alto en la mañana y bajo en la noche, que es lo sano."),
+      F("Sin café después de las 2 p.m.", d.lateCaffeine == null ? null : d.lateCaffeine ? 0 : 1, 2, "La cafeína dura unas 6 horas en el cuerpo y te sube el cortisol de noche."),
+      F("Sin alcohol", d.alcohol ? 0 : 1, 1, "El alcohol desordena el cortisol y el sueño."),
+    ]},
+    {n:"Insulina (sensibilidad)", color:"var(--horm)", why:"Qué tan bien usa tu cuerpo el azúcar. Buena sensibilidad = la comida va al músculo y no a grasa.", f:[
+      F("Caminar 7.000 pasos", d.steps == null ? null : r(d.steps, 7000), 2, "Caminar 10 minutos después de comer baja mucho el pico de azúcar."),
+      F("Hacer ejercicio", d.exType ? (d.exType === "descanso" ? 0.5 : 1) : null, 2, "El músculo que trabaja absorbe azúcar sin necesitar tanta insulina."),
+      F("Fibra a la meta", t && d.meals.length ? r(tot.fiber, t.fiber) : null, 2, "Fríjoles, lentejas, avena, fruta con cáscara, verduras."),
+      F("Azúcar bajo el límite", sugarOk, 2, "Lo que más suma: gaseosa, jugos de caja, postres, pan dulce."),
+      F("Dormir 7 h o más", sleep7, 1, "Una sola noche mala ya baja la sensibilidad a la insulina."),
+    ]},
+    {n:"Melatonina", color:"var(--sleep)", why:"La hormona que te da sueño. Si sale bien, duermes profundo y sale más hormona de crecimiento.", f:[
+      F("Sin pantallas 1 h antes de dormir", yn(d.screensOff), 2, "La luz del celular le dice al cerebro que todavía es de día. Usa modo noche o deja el cel lejos."),
+      F("Acostarte antes de las 11 p.m.", d.bed ? (before("23:00") ? 1 : 0) : null, 2, "La melatonina sube cuando oscurece; si la pasas, te cuesta dormir."),
+      F("Horario regular", bedRegularity(id || cur), 2, "Acuéstate y levántate a la misma hora (±30 min), también el fin de semana."),
+      F("Sol de mañana", d.sun == null ? null : r(d.sun, 10), 2, "La luz de la mañana pone en hora el reloj del cuerpo para que la melatonina salga temprano en la noche."),
+      F("Sin café después de las 2 p.m.", d.lateCaffeine == null ? null : d.lateCaffeine ? 0 : 1, 1, "La cafeína tapa la señal de sueño."),
+    ]},
+  ];
+  H.forEach(h => { const w = h.f.reduce((a,x) => a+x.w, 0); h.score = Math.round(h.f.reduce((a,x) => a+(x.val||0)*x.w, 0)/w*100); });
+  return H;
+}
+const score = (d,t,id) => Math.round(hormones(d,t,id).reduce((a,h) => a+h.score, 0)/5);
+const hasData = d => d && (d.meals?.length || d.bed || d.weight || d.exType || d.sun != null || d.anxiety);
 const toHHMM = m => { m = ((Math.round(m) % 1440) + 1440) % 1440; const h = Math.floor(m/60); return `${((h+11)%12)+1}:${pad(m%60)} ${h < 12 ? "a.m." : "p.m."}`; };
 
 /* ---------- dibujo ---------- */
@@ -595,13 +688,19 @@ function render(){
     + legendItem("Sueño","var(--sleep)",sh ? sh.toFixed(1) : "—",st,"h")
     + (t ? "" : `<button class="btn-ghost small" data-goto="yo">Llena tu perfil para ver metas</button>`);
 
-  const hs = habits(d,t), sc = score(d,t);
+  const hs = hormones(d,t), sc = score(d,t);
   const gC = Math.PI*45;
   $("gaugeSvg").innerHTML = `<path d="M10 58 A45 45 0 0 1 100 58" fill="none" stroke="var(--surface2)" stroke-width="11" stroke-linecap="round"/>
     <path class="ring-anim" d="M10 58 A45 45 0 0 1 100 58" fill="none" stroke="var(--horm)" stroke-width="11" stroke-linecap="round" stroke-dasharray="${gC}" stroke-dashoffset="${gC*(1-sc/100)}" ${sc === 0 ? 'stroke-opacity="0"' : ""}/>`;
   $("scoreV").innerHTML = `${sc}<span class="muted" style="font-size:15px"> /100</span>`;
-  $("scoreL").textContent = sc >= 75 ? "Buen día para tus hormonas" : sc >= 50 ? "Vas a medias" : "Día flojo: mira qué falta abajo";
-  $("hchips").innerHTML = hs.map(h => `<span class="hchip ${h[1] >= 1 ? "on" : h[1] > 0 ? "part" : ""}"><i></i>${h[0]}</span>`).join("");
+  $("scoreL").textContent = sc >= 75 ? "Buen día para tus hormonas" : sc >= 50 ? "Vas a medias" : "Te falta: toca cada una para ver qué";
+  const open = new Set([...document.querySelectorAll(".horm[open]")].map(x => x.dataset.h));
+  $("horms").innerHTML = hs.map((h,i) => `<details class="horm" data-h="${i}" ${open.has(String(i)) ? "open" : ""}><summary>
+      <div class="hd"><b>${h.n}</b><span style="color:${h.color}">${h.score}%</span></div>
+      <div class="bar"><i style="width:${h.score}%;background:${h.color}"></i></div></summary>
+      <p class="why">${h.why}</p>
+      ${h.f.map(x => `<div class="fac"><span class="ic2 ${x.val == null ? "muted" : x.val >= 1 ? "ok" : x.val > 0 ? "warn" : "bad"}">${x.val == null ? "·" : x.val >= 1 ? "✓" : x.val > 0 ? "◐" : "✗"}</span><span>${x.n}${x.val == null ? ' <span class="muted small">sin anotar</span>' : ""}</span>${x.val == null || x.val < 1 ? `<span class="tip">${x.tip}</span>` : ""}</div>`).join("")}
+    </details>`).join("");
 
   if (!coachCtl) $("advice").textContent = d.advice || "";
   $("water").innerHTML = Array.from({length:Math.max(8, d.water+1)}, (_,i) => `<button class="glass ${i < d.water ? "full" : ""}" data-w="${i}" aria-label="${i+1} vasos"></button>`).join("");
@@ -643,7 +742,11 @@ function render(){
   setVal("exMin", d.exMin); setVal("trainType", d.trainType); setVal("steps", d.steps);
   setVal("sun", d.sun); setVal("alcohol", d.alcohol); setVal("weight", d.weight); setVal("notes", d.notes);
   SCALES.forEach(k => $(k).querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", +b.dataset.v === d[k])));
+  setVal("screensOff", d.screensOff); setVal("earlyDinner", d.earlyDinner); setVal("lateCaffeine", d.lateCaffeine);
+  $("suppPills").innerHTML = SUPPS.map(([v,n]) => `<button class="pill" data-sup="${v}" aria-pressed="${(d.supps||[]).includes(v)}">${n}</button>`).join("");
+  setVal("waist", d.waist); setVal("chest", d.chest); setVal("arm", d.arm);
   renderWeight();
+  renderProgress(t);
 
   // YO
   const p = profile();
@@ -682,6 +785,49 @@ function renderSleepWeek(st){
   const wg = profile().wakeGoal || "06:00", w = toMin(wg);
   setVal("wakeGoal", wg);
   $("cycles").innerHTML = [6,5,4].map(n => `<div class="tchip ${n === 6 ? "best" : ""}"><b>${toHHMM(w - n*90 - 15)}</b><span class="small muted">${n} ciclos · ${(n*1.5).toFixed(1)} h</span></div>`).join("");
+}
+
+function renderProgress(t){
+  // racha: días seguidos con algo anotado, contando hacia atrás desde hoy
+  let streak = 0, s = iso(new Date());
+  if (!hasData(day(s))) s = shift(s,-1);
+  while (hasData(day(s))) { streak++; s = shift(s,-1); }
+  $("streak").innerHTML = streak ? `<b class="warn">${streak} día${streak > 1 ? "s" : ""}</b> <span class="muted">seguidos</span>` : `<span class="muted">Anota algo hoy para empezar tu racha</span>`;
+
+  const week = off => Array.from({length:7}, (_,i) => shift(cur, i-6-off)).map(id => [id, day(id)]).filter(([,x]) => hasData(x));
+  const avg = (rows, fn) => { const v = rows.map(fn).filter(x => x != null && !isNaN(x)); return v.length ? v.reduce((a,b) => a+b, 0)/v.length : null; };
+  const stats = rows => ({
+    sleep: avg(rows, ([,x]) => sleepHours(x)),
+    prot: avg(rows.filter(([,x]) => x.meals?.length), ([,x]) => totals(x).prot),
+    kcal: avg(rows.filter(([,x]) => x.meals?.length), ([,x]) => totals(x).kcal),
+    horm: avg(rows, ([id,x]) => score(x, t, id)),
+    gym: rows.filter(([,x]) => isStrength(x)).length,
+    days: rows.length,
+    w: rows.filter(([,x]) => x.weight).map(([,x]) => +x.weight).pop() ?? null,
+  });
+  const a = stats(week(0)), b = stats(week(7));
+  // up = true si subir es bueno
+  const ROWS = [["Sueño promedio","sleep",v => v.toFixed(1)+" h",true],["Proteína diaria","prot",v => fmt(v)+" g",true],["Calorías diarias","kcal",v => fmt(v),profile().goal !== "bajar"],
+    ["Hormonas","horm",v => fmt(v)+"/100",true],["Días de pesas","gym",v => String(v),true],["Días anotados","days",v => String(v),true],["Peso","w",v => v.toFixed(1)+" kg",profile().goal !== "bajar"]];
+  $("cmp").innerHTML = `<tr><th></th><th>Semana pasada</th><th>Esta semana</th><th></th></tr>` + ROWS.map(([n,k,f,up]) => {
+    const x = a[k], y = b[k], diff = x != null && y != null ? x - y : null;
+    const good = diff == null || Math.abs(diff) < 1e-9 ? null : (diff > 0) === up;
+    return `<tr><td>${n}</td><td class="muted">${y != null ? f(y) : "—"}</td><td><b>${x != null ? f(x) : "—"}</b></td><td class="${good == null ? "muted" : good ? "ok" : "bad"}">${diff == null || good == null ? "" : diff > 0 ? "▲" : "▼"}</td></tr>`;
+  }).join("");
+
+  const days14 = Array.from({length:14}, (_,i) => shift(cur, i-13));
+  const hv = days14.map(id => hasData(day(id)) ? score(day(id), t, id) : null);
+  $("hBars").innerHTML = hv.map(v => `<div class="c"><i style="height:${v||0}%"></i></div>`).join("") + `<div class="t" style="bottom:75%"><span>buen día 75</span></div>`;
+  $("hBx").innerHTML = days14.map((id,i) => `<span>${i % 2 ? "" : parse(id).getDate()}</span>`).join("");
+
+  const ms = [["Cintura","waist",false],["Pecho","chest",true],["Brazo","arm",true]].map(([n,k,up]) => {
+    const pts = Object.keys(cache).filter(x => x.startsWith("d-") && cache[x]?.[k]).sort();
+    if (!pts.length) return "";
+    const first = +cache[pts[0]][k], last = +cache[pts[pts.length-1]][k], df = last - first;
+    const cls = !df ? "muted" : (df > 0) === up ? "ok" : "bad";
+    return `<div class="stat"><span class="label">${n}</span><span class="v">${r1(last)} cm</span><span class="small ${cls}">${pts.length > 1 ? (df > 0 ? "+" : "")+r1(df)+" cm desde el "+(() => { const [, , m, dd] = pts[0].split("-"); return +dd+"/"+(+m); })() : "primera medida"}</span></div>`;
+  }).join("");
+  $("measStats").innerHTML = ms || "";
 }
 
 function renderWeight(){
@@ -786,7 +932,9 @@ Perfil: ${p.sex === "f" ? "mujer" : "hombre"}, ${p.age ?? "?"} años, ${p.height
 Metas diarias: ${t ? NKEYS.map(k => k+" "+t[k]).join(", ") : "sin calcular (faltan datos del perfil)"}.
 Hoy (${cur}) lleva: ${NKEYS.map(k => k+" "+r1(tot[k])).join(", ")}. Comidas: ${d.meals.map(m => m.name).join(", ") || "ninguna"}. Agua: ${d.water} vasos.
 Ejercicio hoy: ${d.exType || "nada"} ${d.exMin ? d.exMin+" min" : ""} ${d.trainType || ""}. Pasos: ${d.steps ?? "?"}. Sol: ${d.sun ?? 0} min. Alcohol: ${d.alcohol ? "sí" : "no"}.
-Sueño anoche: ${sh ? sh.toFixed(1)+" h (se acostó "+d.bed+")" : "sin registrar"}, meta ${sleepGoal(t)} h. Energía ${d.energy||"?"}/5, ánimo ${d.mood||"?"}/5, ansiedad ${d.anxiety||"?"}/5, libido ${d.libido||"?"}/5. Puntaje de hábitos hormonales: ${score(d,t)}/100.
+Sueño anoche: ${sh ? sh.toFixed(1)+" h (se acostó "+d.bed+")" : "sin registrar"}, meta ${sleepGoal(t)} h. Energía ${d.energy||"?"}/5, ánimo ${d.mood||"?"}/5, ansiedad ${d.anxiety||"?"}/5, libido ${d.libido||"?"}/5. Café después de las 2 p.m.: ${d.lateCaffeine ? "sí" : "no"}. Pantallas antes de dormir: ${d.screensOff ? "no" : "sí o sin anotar"}. Suplementos: ${(d.supps||[]).join(", ") || "ninguno"}.
+Hábitos por hormona (0-100) y lo que le falta hoy:
+${hormones(d,t).map(h => `${h.n}: ${h.score} — falta: ${h.f.filter(x => (x.val ?? 0) < 1).map(x => x.n).join(", ") || "nada"}`).join("\n")}
 Últimos 7 días:
 ${wk}
 
@@ -794,7 +942,8 @@ Escribe 4 bloques cortos con estos títulos exactos, máximo 200 palabras en tot
 COMIDA: qué comer en lo que queda del día para llegar a las metas y cubrir los nutrientes que faltan, con comida colombiana barata.
 EJERCICIO: la rutina concreta de hoy (ejercicios, series x repeticiones) según lo que ya hizo esta semana; si ya entrenó, cómo recuperarse.
 SUEÑO: qué hacer esta noche y a qué hora acostarse.
-HORMONAS: el hábito que más le falta hoy y cómo arreglarlo.
+HORMONAS: la hormona más baja de hoy (testosterona, hormona de crecimiento, cortisol, insulina o melatonina), el hábito que más le falta y cómo arreglarlo hoy mismo.
+Si habla de suplementos, solo los que tienen buena evidencia (creatina, vitamina D, magnesio, omega-3, zinc) y nunca hormonas, anabólicos ni "potenciadores de testosterona".
 No diagnostiques enfermedades. Si algo se ve preocupante, dile que vaya al médico.`;
   coachCtl = true;
   $("coachBtn").disabled = true;
@@ -867,7 +1016,11 @@ const bindDay = (id, key, kind) => $(id).addEventListener(kind === "check" ? "ch
   touchDay();
 });
 bindDay("bed","bed"); bindDay("wake","wake"); bindDay("exMin","exMin","num"); bindDay("trainType","trainType");
-bindDay("sun","sun","num"); bindDay("steps","steps","num"); bindDay("alcohol","alcohol","check"); bindDay("weight","weight","num"); bindDay("notes","notes");
+bindDay("sun","sun","num"); bindDay("steps","steps","num"); bindDay("alcohol","alcohol","check");
+bindDay("screensOff","screensOff","check"); bindDay("earlyDinner","earlyDinner","check"); bindDay("lateCaffeine","lateCaffeine","check");
+bindDay("waist","waist","num"); bindDay("chest","chest","num"); bindDay("arm","arm","num");
+$("suppPills").onclick = e => { const b = e.target.closest("[data-sup]"); if (!b) return; const d = getDay(), s = new Set(d.supps || []);
+  s.has(b.dataset.sup) ? s.delete(b.dataset.sup) : s.add(b.dataset.sup); d.supps = [...s]; touchDay(); }; bindDay("weight","weight","num"); bindDay("notes","notes");
 [["pAge","age",1],["pHeight","height",1],["pWeight","weight",1],["pGoalW","goalW",1],["pSex","sex"],["pAct","act"],["pGoal","goal"],["pSleep","sleep",1]].forEach(([id,k,num]) =>
   $(id).addEventListener("input", e => { profile()[k] = num ? (e.target.value === "" ? null : +e.target.value) : e.target.value; store.save("profile"); render(); }));
 $("wakeGoal").addEventListener("change", e => { if (e.target.value) { profile().wakeGoal = e.target.value; store.save("profile"); render(); } });
