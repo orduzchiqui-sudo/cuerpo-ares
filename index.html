@@ -200,7 +200,7 @@ textarea{min-height:70px;resize:vertical}
 .horms{display:grid;gap:8px}
 .horm{background:var(--surface2);border-radius:14px;padding:12px 14px}
 .horm summary{display:grid;gap:6px}
-.horm summary::after{content:none}
+.horm summary::after,.horm[open] summary::after{content:none}
 .horm .hd{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .horm .hd b{font-size:15px}
 .horm .hd span{font-weight:800}
