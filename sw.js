@@ -1,5 +1,5 @@
 // Guarda la app en el celular para que abra sin internet. Subir VERSION en cada cambio.
-const VERSION = "cuerpo-ares-v5";
+const VERSION = "cuerpo-ares-v6";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/maskable-512.png", "icons/apple-180.png"];
 
 self.addEventListener("install", e => {
