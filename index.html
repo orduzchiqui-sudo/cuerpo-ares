@@ -156,6 +156,12 @@ button:active{transform:scale(.96)}
 .mil{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-size:13.5px}
 .mil .st{font-weight:800}
 .score4{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+/* app adaptable: lo que no aplica a la persona no se muestra */
+body.simple [data-adv], body.noex [data-ex], body.no-food [data-food], body.no-sleep [data-sleep], body.no-horm [data-horm], body.no-body [data-body]{display:none!important}
+body.simple .screen .note{display:none}
+body.simple .screen .card .note.keep{display:block}
+button.tli{background:transparent;width:100%;text-align:left;font:inherit;color:inherit;border-radius:12px;padding:7px 0}
+@media (hover:hover){button.tli:hover{background:var(--surface2)}}
 /* guía de nutrientes */
 .mguide{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 @media (max-width:440px){.mguide{grid-template-columns:1fr}}
@@ -645,6 +651,14 @@ textarea{min-height:70px;resize:vertical}
 
   <!-- YO -->
   <main class="screen" id="s-yo" hidden>
+    <h2>Cómo quieres la app</h2>
+    <div class="card">
+      <div class="field"><span class="label">Vista</span><div class="pills" id="sView"><button class="pill" data-view="simple">Simple</button><button class="pill" data-view="full">Completa</button></div>
+        <span class="small muted">Simple muestra lo esencial. Completa muestra todo: hormonas, plan de 10 tareas, medidas, progreso.</span></div>
+      <div class="field"><span class="label">¿Haces ejercicio?</span><div class="pills" id="sEx"><button class="pill" data-ex="si">Sí, varios días</button><button class="pill" data-ex="aveces">A veces</button><button class="pill" data-ex="no">No</button></div></div>
+      <div class="field"><span class="label">Qué quieres seguir</span><div class="pills" id="sMods"><button class="pill" data-mod="food">Comida</button><button class="pill" data-mod="sleep">Sueño</button><button class="pill" data-mod="horm">Hormonas</button><button class="pill" data-mod="body">Peso y medidas</button></div></div>
+    </div>
+
     <h2>Perfil y metas</h2>
     <div class="card">
       <div class="grid2">
@@ -868,14 +882,15 @@ function targets(id){
   const floor = Math.round(Math.max(bmr, p.sex === "f" ? 1200 : 1500));
   const raw = tdee + M.dir*pace;
   const kcal = Math.max(raw, floor);
-  const prot = Math.round(w*M.prot);
+  // sin ejercicio basta 1,2-1,4 g/kg (más alto desde los 50 para no perder músculo)
+  const prot = Math.round(w*(p.exercise === "no" ? (p.age >= 50 ? 1.4 : 1.2) : M.prot));
   const fat = Math.round(kcal*0.28/9);
-  const f = p.sex === "f";
+  const f = p.sex === "f", age = +p.age || 25;
   // metas diarias de referencia para adultos 19-30 años (IOM); azúcar y sodio son límites máximos
-  return { kcal, prot, fat, carb: Math.max(0, Math.round((kcal - prot*4 - fat*9)/4)), fiber: f ? 25 : 38, sugar: 50,
-           vitA: f ? 700 : 900, vitC: f ? 75 : 90, vitD: 15, b12: 2.4, folate: 400,
-           calcium: 1000, iron: f ? 18 : 8, mag: f ? 310 : 400, zinc: f ? 8 : 11, potassium: f ? 2600 : 3400, sodium: 2300,
-           omega3: f ? 1.1 : 1.6, vitE: 15, vitK: f ? 90 : 120, b6: 1.3, selenium: 55, sleep: Number(p.sleep)||9, tdee, adj: kcal - tdee, capped: raw < floor, w, base, exK, stK, stepsAssumed, bmr: Math.round(bmr) };
+  return { kcal, prot, fat, carb: Math.max(0, Math.round((kcal - prot*4 - fat*9)/4)), fiber: f ? (age >= 51 ? 21 : 25) : (age >= 51 ? 30 : 38), sugar: f ? 40 : 50,
+           vitA: f ? 700 : 900, vitC: f ? 75 : 90, vitD: age >= 71 ? 20 : 15, b12: 2.4, folate: 400,
+           calcium: (f && age >= 51) || age >= 71 ? 1200 : 1000, iron: f && age < 51 ? 18 : 8, mag: f ? (age >= 31 ? 320 : 310) : (age >= 31 ? 420 : 400), zinc: f ? 8 : 11, potassium: f ? 2600 : 3400, sodium: 2300,
+           omega3: f ? 1.1 : 1.6, vitE: 15, vitK: f ? 90 : 120, b6: age >= 51 ? (f ? 1.5 : 1.7) : 1.3, selenium: 55, sleep: Number(p.sleep)||9, tdee, adj: kcal - tdee, capped: raw < floor, w, base, exK, stK, stepsAssumed, bmr: Math.round(bmr) };
 }
 // resume la lista de actividades en los campos viejos que usan las hormonas y el plan
 function syncEx(d){
@@ -918,7 +933,7 @@ function hormones(d, t, id){
   const hard = isStrength(d) || ["futbol","cardio"].includes(d.exType) ? 1 : d.exType ? 0 : null;
   const F = (n, val, w, tip) => ({n, val, w, tip});
   const H = [
-    {n:"Testosterona", color:"var(--kcal)", why:"Músculo, fuerza, energía, libido y ánimo.", f:[
+    {n: profile().sex === "f" ? "Hormonas sexuales" : "Testosterona", color:"var(--kcal)", why: profile().sex === "f" ? "Estrógeno, progesterona y testosterona en equilibrio: ánimo, energía, huesos, piel y libido." : "Músculo, fuerza, energía, libido y ánimo.", f:[
       F("Dormir tus horas", sleepF, 3, "Casi toda la testosterona se fabrica durmiendo. Dormir 5 h en vez de 8 la baja cerca de 15%."),
       F("Entrenar fuerza", isStrength(d) ? 1 : d.exType === "descanso" ? 0.5 : d.exType ? 0 : null, 2, "Pesas con ejercicios grandes: sentadilla, peso muerto, press de banca, dominadas, remo."),
       F("Zinc a la meta", S.includes("zinc") ? 1 : t && d.meals.length ? r(tot.zinc, t.zinc) : null, 1, "Carne de res, hígado, huevo, fríjoles, maní, semillas de calabaza."),
@@ -978,6 +993,7 @@ function setVal(id, v){ const el = $(id); if (document.activeElement !== el) { i
 /* ---------- render ---------- */
 const DAYS = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"], MONTHS = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
 function render(){
+  applyPrefs();
   const d = day() || blankDay(), t = targets(), tot = totals(d), sh = sleepHours(d), st = sleepGoal(t);
   const dt = parse(cur), today = iso(new Date());
   $("dateLbl").textContent = cur === today ? "Hoy" : cur === shift(today,-1) ? "Ayer" : `${dt.getDate()} ${MONTHS[dt.getMonth()]}`;
@@ -1532,11 +1548,12 @@ function nextTrainDay(id){
 function schedule(id){
   const p = profile(), d = day(id) || blankDay(), st = sleepGoal(targets());
   const wake = toMin(p.wakeGoal || "06:00"), bed = wake - st*60 - 15 + 1440; // minutos desde la medianoche del día
-  const isTrain = (p.trainDays || []).includes(parse(id).getDay()), sess = +p.sessMin || 60;
+  const noEx = p.exercise === "no", isTrain = !noEx && (p.trainDays || []).includes(parse(id).getDay()), sess = +p.sessMin || 60;
   let trainAt = toMin(p.trainTime || "18:00"); if (trainAt < wake) trainAt += 1440;
-  const I = [], add = (m, ic, txt, done, sub) => I.push({m, ic, txt, done:!!done, sub});
-  add(wake, "☀️", "Despertar", d.wake, "Toca 'Me desperté'");
-  add(wake + 15, "🌤️", "Sol de mañana, 15 min", (d.sun || 0) >= 15, "Ordena tu reloj del cuerpo");
+  // act: lo que pasa al tocar el paso en "Tu día"
+  const I = [], add = (m, ic, txt, done, sub, act) => I.push({m, ic, txt, done:!!done, sub, act});
+  add(wake, "☀️", "Despertar", d.wake, "Toca cuando te levantes", "wake");
+  add(wake + 15, "🌤️", "Sol de mañana, 15 min", (d.sun || 0) >= 15, "Toca cuando lo hagas", "sun");
   // comidas: desayuno 45 min después de despertar, almuerzo 12:30, cena 2,5 h antes de dormir; las extra van en medio.
   // En día de entreno la merienda pasa a pre-entreno (90 min antes) y la comida que sigue al entreno es la de recuperación.
   const n = Math.max(3, +p.mealsN || 4), br = wake + 45, lu = Math.max(br + 180, 12*60 + 30), di = bed - 150;
@@ -1549,12 +1566,12 @@ function schedule(id){
     const post = slots.filter(s => s.m > trainAt && s.m < trainAt + sess + 150).sort((a,b) => a.m - b.m)[0];
     if (post) Object.assign(post, {n: post.n + " de recuperación", sub:"Proteína + carbohidrato: arroz, pollo o huevos"});
   }
-  slots.sort((a,b) => a.m - b.m).forEach((s,i) => add(s.m, "🍽️", s.n, d.meals.length > i, s.sub));
-  add(14*60, "☕", "Último café del día", d.lateCaffeine === false, "Toca para marcar que cumpliste");
-  if (isTrain) { const r = nextRoutine(); add(trainAt, "💪", "Entrenar" + (r ? ": " + r.name.split(" (")[0] : ""), isStrength(d), `${sess} min · rinde más entre 4 y 7 p.m.`); }
-  else add(17*60, "🚶", "Caminar 30 minutos", (d.steps || 0) >= mode().steps*0.8, "Descanso activo");
-  add(bed - 60, "📵", "Fuera pantallas", d.screensOff === true, "Más melatonina, más sueño profundo");
-  add(bed, "🌙", "A dormir", !!day(shift(id, 1))?.bed, `${st} h de sueño`);
+  if (p.modules?.food !== false) slots.sort((a,b) => a.m - b.m).forEach((s,i) => add(s.m, "🍽️", s.n, d.meals.length > i, s.sub || "Toca para tomarle foto", "food"));
+  add(14*60, "☕", "Último café del día", d.lateCaffeine === false, "Toca si no tomaste café después", "caf");
+  if (isTrain) { const r = nextRoutine(); add(trainAt, "💪", "Entrenar" + (r ? ": " + r.name.split(" (")[0] : ""), isStrength(d), `${sess} min · toca para empezar`, "train"); }
+  else add(17*60, "🚶", "Caminar 30 minutos", (d.steps || 0) >= mode().steps*0.8 || actsOf(d).some(a => a.type === "caminar"), noEx ? "Lo más importante para tu salud · toca al terminar" : "Descanso activo · toca al terminar", "walk");
+  add(bed - 60, "📵", "Fuera pantallas", d.screensOff === true, "Toca cuando dejes el celular", "scr");
+  add(bed, "🌙", "A dormir", !!day(shift(id, 1))?.bed, `${st} h de sueño · toca al acostarte`, "sleep");
   I.sort((a,b) => a.m - b.m);
   return {items:I, isTrain, late: isTrain && trainAt > bed - 180, bed, wake, trainAt};
 }
@@ -1562,10 +1579,14 @@ function renderDay(){
   const S = schedule(cur), now = new Date(), today = cur === iso(now);
   const nowM = now.getHours()*60 + now.getMinutes() + (now.getHours()*60 < S.wake - 60 ? 1440 : 0);
   const nxt = today ? S.items.find(x => !x.done && x.m + 30 >= nowM) : null;
-  $("dayCard").innerHTML = `<div class="row between"><h3>Tu día</h3><span class="small muted">${S.isTrain ? "💪 día de entreno" : "día de descanso"} · ${S.items.filter(x => x.done).length} de ${S.items.length}</span></div>
+  // vista simple: solo lo que falta (máximo 4) y un botón para ver el día completo
+  const compact = isSimple() && !dayOpen, shown = compact ? S.items.filter(x => !x.done).slice(0, 4) : S.items, nDone = S.items.filter(x => x.done).length;
+  $("dayCard").innerHTML = `<div class="row between"><h3>Tu día</h3><span class="small muted">${S.isTrain ? "💪 día de entreno · " : ""}${nDone} de ${S.items.length}</span></div>
+    <div class="bar"><i style="width:${nDone/S.items.length*100}%;background:var(--prot)"></i></div>
     ${S.late ? `<p class="small warn" style="margin:0">Entrenar a las ${toHHMM(S.trainAt)} te deja menos de 3 horas antes de dormir y te quita sueño. Mejor antes de las ${toHHMM(S.bed - 180)}</p>` : ""}
-    <div class="tl">${S.items.map(x => `<div class="tli ${x.done ? "done" : x === nxt ? "now" : ""}"><span class="tm">${toHHMM(x.m)}</span><span class="ic">${x.done ? "✓" : x.ic}</span><span class="tx"><b>${esc(x.txt)}</b>${x.sub ? `<span>${esc(x.sub)}</span>` : ""}</span></div>`).join("")}</div>
-    ${(profile().trainDays || []).length ? "" : `<button class="btn-ghost" data-goto="yo">Pon tus días y hora de entreno</button>`}`;
+    <div class="tl">${shown.map(x => `<button class="tli ${x.done ? "done" : x === nxt ? "now" : ""}" data-dact="${x.act || ""}"><span class="tm">${toHHMM(x.m)}</span><span class="ic">${x.done ? "✓" : x.ic}</span><span class="tx"><b>${esc(x.txt)}</b>${x.sub && !x.done ? `<span>${esc(x.sub)}</span>` : ""}</span></button>`).join("") || `<p class="small ok">¡Cumpliste todo el día! 🎉</p>`}</div>
+    ${isSimple() ? `<button class="btn-ghost small" data-dayall>${dayOpen ? "Ver solo lo que falta" : `Ver todo el día (${nDone} hecho${nDone === 1 ? "" : "s"})`}</button>` : ""}
+    ${(profile().trainDays || []).length || profile().exercise === "no" ? "" : `<button class="btn-ghost" data-goto="yo">Pon tus días y hora de entreno</button>`}`;
 }
 function renderHorario(){
   const p = profile();
@@ -1713,6 +1734,54 @@ function renderGaps(d, t, tot){
       : `<p class="small ok" style="margin:0">Vas bien en vitaminas y minerales hoy.</p>`}
     ${over.length ? `<p class="small bad" style="margin:0">Te pasaste de: ${over.map(nutName).join(", ")}. ${over.map(k => LIMITS[k].tip).join(" ")}</p>` : ""}`;
 }
+
+/* ---------- app adaptable: vista simple o completa, ejercicio y qué seguir ---------- */
+const isSimple = () => (profile().view || "simple") === "simple";
+let dayOpen = false, tagged = false;
+// marca cada tarjeta con lo que necesita para mostrarse: adv = solo vista completa, ex = hace ejercicio, y el módulo
+function tagCards(){
+  if (tagged || !document.querySelector) return; tagged = true;
+  const T = (id, flags) => { const el = $(id), c = el?.closest?.(".card") || el; if (c?.dataset) flags.split(" ").forEach(f => c.dataset[f] = "1"); };
+  T("planN","adv"); T("horms","adv horm"); T("coachBtn","adv"); T("nutr","adv food"); T("cycles","adv sleep"); T("streak","adv");
+  T("hrCard","adv ex"); T("routines","ex"); T("suppPills","adv"); T("waist","adv body"); T("notes","adv"); T("wChart","body"); T("planCard","body");
+  T("gapCard","food"); T("macroGuide","food"); T("sleepBars","sleep");
+  ["hTrain","hSess"].forEach(id => { const f = $(id)?.closest?.(".field"); if (f) f.dataset.ex = "1"; });
+  const hd = $("hDays")?.closest?.(".field"); if (hd) hd.dataset.ex = "1";
+  const D = (el, k) => { if (el?.dataset) el.dataset[k] = "1"; };
+  D(document.querySelector('.tab[data-tab="comida"]'), "food"); D($("camTab"), "food"); D(document.querySelector('.tab[data-tab="sueno"]'), "sleep");
+}
+function applyPrefs(){
+  tagCards();
+  const p = profile(), m = p.modules || {}, b = document.body;
+  if (!b?.classList) return;
+  b.classList.toggle("simple", isSimple());
+  b.classList.toggle("noex", p.exercise === "no");
+  ["food","sleep","horm","body"].forEach(k => b.classList.toggle("no-" + k, m[k] === false));
+  const pr = (id, attr, val) => $(id).querySelectorAll("[data-" + attr + "]").forEach(x => x.setAttribute("aria-pressed", val(x.dataset[attr])));
+  pr("sView", "view", v => (p.view || "simple") === v);
+  pr("sEx", "ex", v => (p.exercise || "si") === v);
+  pr("sMods", "mod", v => m[v] !== false);
+}
+$("sView").onclick = e => { const x = e.target.closest("[data-view]"); if (!x) return; profile().view = x.dataset.view; store.save(); render(); toast(x.dataset.view === "simple" ? "Vista simple: solo lo esencial" : "Vista completa: todo a la vista"); };
+$("sEx").onclick = e => { const x = e.target.closest("[data-ex]"); if (!x) return; const p = profile(); p.exercise = x.dataset.ex;
+  if (p.exercise === "no" && ["ganar","volumen"].includes(p.goal)) { p.goal = "mantener"; toast("Sin ejercicio, el modo pasó a Mantener"); }
+  store.save(); render(); };
+$("sMods").onclick = e => { const x = e.target.closest("[data-mod]"); if (!x) return; const p = profile(), m = p.modules || (p.modules = {}); m[x.dataset.mod] = m[x.dataset.mod] === false; store.save(); render(); };
+$("dayCard").addEventListener("click", e => {
+  if (e.target.closest("[data-dayall]")) { dayOpen = !dayOpen; renderDay(); return; }
+  const b = e.target.closest("[data-dact]"); if (!b) return;
+  const a = b.dataset.dact, d = getDay();
+  if (a === "wake") return markWake();
+  if (a === "sleep") return markSleep();
+  if (a === "sun") { d.sun = (d.sun || 0) >= 15 ? null : 15; touchDay(); if (d.sun) toast("+10 puntos · sol de mañana ☀️"); return; }
+  if (a === "caf") { d.lateCaffeine = d.lateCaffeine === false ? null : false; touchDay(); return; }
+  if (a === "scr") { d.screensOff = !d.screensOff; touchDay(); return; }
+  if (a === "walk") { const has = actsOf(d).some(x => x.type === "caminar"); d.acts = actsOf(d);
+    if (has) d.acts = d.acts.filter(x => x.type !== "caminar"); else d.acts.push({type:"caminar", min:30, int:1});
+    syncEx(d); touchDay(); if (!has) toast(`Caminata anotada · ${fmt(actKcal({type:"caminar", min:30, int:1}, lastWeight() || 70))} kcal 🚶`); return; }
+  if (a === "food") { if (ai.key()) $("photo").click(); else show("comida"); return; }
+  if (a === "train") { const r = nextRoutine(); if (r && !d.workout) { d.workout = {rid:r.id, name:r.name, plan:structuredClone(r.ex), sets:{}, start:nowHHMM()}; store.save(); hrAutoStart(); } show("cuerpo"); renderWorkout(); return; }
+});
 
 /* ---------- siestas ---------- */
 const r1c = x => String(r1(x)).replace(".", ",");
@@ -1933,7 +2002,8 @@ function renderTodo(d, t, tot){
   const plan = (p.trainDays || []).length ? p.trainDays : null, dow = parse(cur).getDay(), gymTarget = plan ? plan.length : M.gym;
   // ENTRENAMIENTO
   let train, btn = "";
-  if (done.length) train = `Ya entrenaste hoy (${fmt(t.exK)} kcal). Ahora recupera: proteína en la siguiente comida, agua y 10 minutos de estiramiento.`;
+  if (p.exercise === "no") train = actsOf(d).length || (d.steps || 0) >= 6000 ? `Ya te moviste hoy. Bien hecho: caminar a diario es lo que más protege el corazón, el azúcar y el ánimo.` : `Muévete un poco: camina 30 minutos (o ${fmt(6000)} pasos). Si puedes, 10 minutos en casa: sentarte y pararte de una silla, flexiones contra la pared y elevar talones.`;
+  else if (done.length) train = `Ya entrenaste hoy (${fmt(t.exK)} kcal). Ahora recupera: proteína en la siguiente comida, agua y 10 minutos de estiramiento.`;
   else if (d.exType === "descanso") train = `Hoy es descanso. Camina para llegar a ${fmt(M.steps)} pasos: suma sin cansar los músculos.`;
   else if (sh != null && sh < 6) train = `Dormiste ${sh.toFixed(1)} h. Hoy mejor suave: camina 30-40 minutos o haz movilidad. Pesas pesadas con poco sueño rinden menos y te puedes lesionar.`;
   else if (!plan && streak >= 3) train = `Llevas ${streak} días seguidos entrenando. Hoy descansa o camina: el músculo crece cuando descansas.`;
@@ -1961,7 +2031,7 @@ function renderTodo(d, t, tot){
   if (M.dir < 0) sleepTips.push("En déficit, deja cerca del 20% de tus calorías para la cena con proteína: el hambre de noche quita sueño");
   if (done.length) sleepTips.push("Entrenaste: duerme las horas completas, ahí se construye el músculo");
   el.innerHTML = `<div class="row between"><h3>Hoy te toca</h3><span class="small muted">modo ${M.n.toLowerCase()}</span></div>
-    <div class="todo-b"><div class="hd">💪 Entrenamiento</div><p>${train}</p>${btn}<span class="small muted">Pasos: ${fmt(steps)} de ${fmt(M.steps)}</span></div>
+    <div class="todo-b"><div class="hd">${p.exercise === "no" ? "🚶 Movimiento" : "💪 Entrenamiento"}</div><p>${train}</p>${btn}<span class="small muted">Pasos: ${fmt(steps)} de ${fmt(p.exercise === "no" ? 7000 : M.steps)}</span></div>
     <div class="todo-b"><div class="hd">🍽️ Comida</div><p>${food}</p>${ideas.length ? `<ul>${ideas.map(x => `<li>${x}</li>`).join("")}</ul>` : ""}</div>
     <div class="todo-b"><div class="hd">🌙 Sueño</div><p>Para dormir ${st} h y levantarte a las ${toHHMM(wake)}: acuéstate a las <b>${toHHMM(bed)}</b></p><ul>${sleepTips.map(x => `<li>${x}</li>`).join("")}</ul></div>`;
 }
@@ -2128,6 +2198,8 @@ function renderOnb(){
     <div class="grid2">
       <label class="field" style="grid-column:1/-1"><span class="label">Tu nombre</span><input id="oName" value="${esc(p.name || "")}" placeholder="Alejandro"></label>
       <label class="field"><span class="label">Edad</span><input id="oAge" type="number" min="12" max="99" required value="${p.age ?? ""}"></label>
+      <label class="field"><span class="label">Sexo</span><select id="oSex"><option value="m" ${p.sex !== "f" ? "selected" : ""}>Hombre</option><option value="f" ${p.sex === "f" ? "selected" : ""}>Mujer</option></select></label>
+      <label class="field"><span class="label">¿Haces ejercicio?</span><select id="oEx"><option value="si" ${p.exercise === "si" ? "selected" : ""}>Sí, varios días</option><option value="aveces" ${p.exercise === "aveces" ? "selected" : ""}>A veces</option><option value="no" ${p.exercise === "no" ? "selected" : ""}>No</option></select></label>
       <label class="field"><span class="label">Peso actual (kg)</span><input id="oW" type="number" min="30" step="0.1" required value="${p.weight ?? ""}"></label>
       <label class="field"><span class="label">Estatura (cm)</span><input id="oH" type="number" min="120" max="230" required value="${p.height ?? ""}"></label>
       <label class="field"><span class="label">Peso meta (kg)</span><input id="oGW" type="number" min="30" step="0.1" value="${p.goalW ?? ""}"></label>
@@ -2165,7 +2237,8 @@ $("onbIn").onsubmit = async e => {
     const p = profile();
     p.name = $("oName").value.trim(); p.age = +$("oAge").value || null; p.weight = +$("oW").value || null;
     p.height = +$("oH").value || null; p.goalW = +$("oGW").value || null; p.goal = $("oGoal").value;
-    p.startW = p.weight; p.pace = p.pace || defaultPace(p.goal);
+    p.startW = p.weight; p.pace = p.pace || defaultPace(p.goal); p.sex = $("oSex").value; p.exercise = $("oEx").value;
+    if (p.exercise === "no") { p.trainDays = []; if (["ganar","volumen"].includes(p.goal)) p.goal = "mantener"; }
     store.save(); render(); onbStep = ai.key() ? 2 : 1; renderOnb(); return;
   }
   if (onbStep === 1) { if (await tryKey()) { onbStep = 2; renderOnb(); } return; }
