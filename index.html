@@ -1558,8 +1558,8 @@ function renderOnb(){
       <label class="field"><span class="label">Peso actual (kg)</span><input id="oW" type="number" min="30" step="0.1" required value="${p.weight ?? ""}"></label>
       <label class="field"><span class="label">Estatura (cm)</span><input id="oH" type="number" min="120" max="230" required value="${p.height ?? ""}"></label>
       <label class="field"><span class="label">Peso meta (kg)</span><input id="oGW" type="number" min="30" step="0.1" value="${p.goalW ?? ""}"></label>
-      <label class="field" style="grid-column:1/-1"><span class="label">Objetivo</span><select id="oGoal">
-        <option value="ganar" ${p.goal === "ganar" ? "selected" : ""}>Ganar músculo</option><option value="mantener" ${p.goal === "mantener" ? "selected" : ""}>Mantener</option><option value="bajar" ${p.goal === "bajar" ? "selected" : ""}>Bajar grasa</option></select></label>
+      <label class="field" style="grid-column:1/-1"><span class="label">Modo</span><select id="oGoal">
+        ${Object.entries(MODES).map(([k,m]) => `<option value="${k}" ${p.goal === k ? "selected" : ""}>${m.n}: ${m.d.toLowerCase()}</option>`).join("")}</select></label>
     </div>
     <button type="submit" class="btn-main big">Seguir</button>`;
   if (onbStep === 1) f.innerHTML = bar + `<h1>Conecta la inteligencia artificial</h1>
