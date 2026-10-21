@@ -122,6 +122,26 @@ input::placeholder,textarea::placeholder{color:var(--muted)}
 .act b{font-weight:700}
 .act span{font-size:12px;color:var(--muted)}
 .act button{background:transparent;color:var(--muted);padding:4px 8px}
+/* línea del día */
+.tl{display:grid;gap:0}
+.tli{display:grid;grid-template-columns:62px 26px 1fr;gap:8px;align-items:start;padding:7px 0;position:relative}
+.tli .tm{font-size:12.5px;color:var(--muted);font-weight:700;padding-top:2px;text-align:right}
+.tli .ic{width:26px;height:26px;border-radius:50%;background:var(--surface2);display:grid;place-items:center;font-size:13px;position:relative;z-index:1}
+.tli:not(:last-child)::before{content:"";position:absolute;left:83px;top:30px;bottom:-6px;width:2px;background:var(--line)}
+.tli .tx b{display:block;font-size:14px}
+.tli .tx span{font-size:12px;color:var(--muted)}
+.tli.done .ic{background:var(--prot);color:#06170F}
+.tli.done .tx b{color:var(--muted);text-decoration:line-through}
+.tli.now .ic{background:var(--kcal);box-shadow:0 0 0 4px #FF7A4533}
+.tli.now .tx b{color:var(--kcal)}
+/* plan de metas */
+.phases{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.ph{background:var(--surface2);border-radius:12px;padding:9px 10px;display:grid;gap:2px;font-size:12px;color:var(--muted)}
+.ph b{color:var(--ink);font-size:13px}
+.ph.on{background:color-mix(in srgb,var(--kcal) 22%,var(--surface2));outline:1.5px solid var(--kcal)}
+.mil{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-size:13.5px}
+.mil .st{font-weight:800}
+.score4{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .sbtn input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
 .phase{display:flex;height:14px;border-radius:7px;overflow:hidden;margin-top:4px}
 .phase i{display:block;height:100%}
@@ -315,6 +335,8 @@ textarea{min-height:70px;resize:vertical}
 
     <div class="card nowcard" id="nowCard" hidden></div>
 
+    <div class="card" id="dayCard"></div>
+
     <div class="card" id="goalCard"></div>
 
     <div class="card coach" id="todo"></div>
@@ -432,6 +454,8 @@ textarea{min-height:70px;resize:vertical}
   <!-- CUERPO -->
   <main class="screen" id="s-cuerpo" hidden>
     <h2>Cuerpo</h2>
+    <div class="card" id="planCard"></div>
+
     <div class="card">
       <div class="row between"><h3>Tu progreso</h3><span class="small" id="streak"></span></div>
       <div class="tablewrap"><table class="cmp" id="cmp"></table></div>
@@ -526,6 +550,19 @@ textarea{min-height:70px;resize:vertical}
           <option value="250">Suave: 250 kcal</option><option value="300">Moderado: 300 kcal</option><option value="500">Normal: 500 kcal</option><option value="750">Rápido: 750 kcal</option></select></label>
       </div>
       <div id="targetsMsg" class="small"></div>
+    </div>
+
+    <h2>Mi horario</h2>
+    <div class="card">
+      <p class="note">Con esto la app arma tu día: a qué hora comer, entrenar, dejar el café y las pantallas, y dormir.</p>
+      <div class="grid2">
+        <label class="field"><span class="label">Me levanto a las</span><input type="time" id="hWake"></label>
+        <label class="field"><span class="label">Entreno a las</span><input type="time" id="hTrain"></label>
+        <label class="field"><span class="label">Comidas al día</span><select id="hMeals"><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></label>
+        <label class="field"><span class="label">Tiempo por entreno</span><select id="hSess"><option value="45">45 min (lo esencial)</option><option value="60">60 min</option><option value="75">75 min</option><option value="90">90 min</option></select></label>
+      </div>
+      <div class="field"><span class="label">Días que entreno</span><div class="pills" id="hDays"></div></div>
+      <div class="small" id="hMsg"></div>
     </div>
 
     <h2>Ajustes</h2>
@@ -834,7 +871,7 @@ function render(){
   const name = (profile().name || "").trim().split(" ")[0], hr = new Date().getHours();
   $("hello").textContent = cur !== today ? "Ese día" : (hr < 12 ? "Buenos días" : hr < 19 ? "Buenas tardes" : "Buenas noches") + (name ? ", " + name : "");
   renderPlan(d, t);
-  renderGoal(t, tot); renderTodo(d, t, tot); renderActs(d, t); renderNow(); renderPhases(d); renderRoutines(); renderWorkout();
+  renderGoal(t, tot); renderTodo(d, t, tot); renderDay(); renderHorario(); renderPlanCard(t); renderActs(d, t); renderNow(); renderPhases(d); renderRoutines(); renderWorkout();
 
   // HOY: anillos
   $("ringsSvg").innerHTML = arc(84,84,74,t ? tot.kcal/t.kcal : 0,"var(--kcal)",14) + arc(84,84,56,t ? tot.prot/t.prot : 0,"var(--prot)",14) + arc(84,84,38,sh ? sh/st : 0,"var(--sleep)",14)
@@ -1089,6 +1126,7 @@ async function coach(){
 Perfil: ${p.sex === "f" ? "mujer" : "hombre"}, ${p.age ?? "?"} años, ${p.height ?? "?"} cm, ${p.weight ?? "?"} kg, meta ${p.goalW ?? "?"} kg, objetivo: ${p.goal}.
 Metas diarias: ${t ? NKEYS.map(k => k+" "+t[k]).join(", ") : "sin calcular (faltan datos del perfil)"}.
 ${t ? `Gasta unas ${t.tdee} kcal al día; su meta es ${t.adj < 0 ? "un déficit de " + (-t.adj) : t.adj > 0 ? "un superávit de " + t.adj : "mantener"} kcal. Peso actual ${t.w} kg.` : ""}
+Horario: se levanta a las ${p.wakeGoal || "06:00"}, entrena ${(p.trainDays || []).map(i => DOWL[i]).join(", ") || "sin días fijos"} a las ${p.trainTime || "18:00"} (${p.sessMin || 60} min), ${p.mealsN || 4} comidas al día. Hoy ${schedule(cur).isTrain ? "SÍ" : "NO"} es día de entreno.
 Entrenamiento de hoy: ${d.workout ? d.workout.name + ": " + Object.entries(d.workout.sets).map(([n,S]) => n + " " + S.filter(s => s?.done).map(s => (s.kg||0) + "kg×" + (s.reps||0)).join("/")).join("; ") : "ninguno con rutina"}. Sus rutinas: ${routines().items.map(r => r.name).join(", ")}.
 Hoy (${cur}) lleva: ${NKEYS.map(k => k+" "+r1(tot[k])).join(", ")}. Comidas: ${d.meals.map(m => m.name).join(", ") || "ninguna"}. Agua: ${d.water} vasos.
 Ejercicio hoy: ${d.exType || "nada"} ${d.exMin ? d.exMin+" min" : ""} ${d.trainType || ""}. Pasos: ${d.steps ?? "?"}. Sol: ${d.sun ?? 0} min. Alcohol: ${d.alcohol ? "sí" : "no"}.
@@ -1183,7 +1221,7 @@ $("suppPills").onclick = e => { const b = e.target.closest("[data-sup]"); if (!b
 [["pAge","age",1],["pHeight","height",1],["pWeight","weight",1],["pGoalW","goalW",1],["pSex","sex"],["pGoal","goal"],["pSleep","sleep",1],["pPace","pace",1]].forEach(([id,k,num]) =>
   $(id).addEventListener("input", e => { const p = profile(); p[k] = num ? (e.target.value === "" ? null : +e.target.value) : e.target.value;
     // al cambiar de meta, la barra de avance arranca desde el peso de hoy
-    if (k === "goal" || k === "goalW") p.startW = lastWeight();
+    if (k === "goal" || k === "goalW") { p.startW = lastWeight(); p.planStart = cur; }
     if (k === "goal") p.pace = defaultPace(p.goal) || p.pace;
     store.save(); render(); }));
 $("wakeGoal").addEventListener("change", e => { if (e.target.value) { profile().wakeGoal = e.target.value; store.save("profile"); render(); } });
@@ -1311,7 +1349,7 @@ function trendAdvice(kgWk, w){
 const t0 = () => targets() || {kcal:0};
 $("goalCard").addEventListener("click", e => {
   const m = e.target.closest("[data-mode]"), pc = e.target.closest("[data-pace]"), p = profile();
-  if (m && p.goal !== m.dataset.mode) { p.goal = m.dataset.mode; p.pace = defaultPace(p.goal); p.startW = lastWeight(); store.save(); render(); toast(`Modo ${mode().n}: ${mode().d}`); }
+  if (m && p.goal !== m.dataset.mode) { p.goal = m.dataset.mode; p.pace = defaultPace(p.goal); p.startW = lastWeight(); p.planStart = cur; store.save(); render(); toast(`Modo ${mode().n}: ${mode().d}`); }
   // delta > 0 = más calorías: en déficit baja el déficit, en superávit sube el superávit
   if (pc) { const dlt = +pc.dataset.pace, M = mode(); p.pace = Math.max(100, Math.min(1000, (+p.pace || M.pace) + dlt*M.dir)); store.save(); render(); toast(`Listo: tu meta ahora es ${fmt(t0().kcal)} kcal`); }
 });
@@ -1355,6 +1393,122 @@ type debe ser uno de: fuerza, futbol, correr, bici, caminar, hiit, nadar, otro. 
   } catch (err) { $("actPhotoMsg").textContent = errMsg(err); }
 });
 
+/* ---------- mi horario: todo el día sale de la hora de despertar y los días de entreno ---------- */
+const DOW = ["D","L","M","X","J","V","S"], DOWL = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+const mod = m => ((Math.round(m) % 1440) + 1440) % 1440;
+function nextTrainDay(id){
+  const P = profile().trainDays || []; if (!P.length) return null;
+  for (let i = 1; i <= 7; i++) { const dw = parse(shift(id, i)).getDay(); if (P.includes(dw)) return {days:i, dow:dw}; }
+  return null;
+}
+function schedule(id){
+  const p = profile(), d = day(id) || blankDay(), st = sleepGoal(targets());
+  const wake = toMin(p.wakeGoal || "06:00"), bed = wake - st*60 - 15 + 1440; // minutos desde la medianoche del día
+  const isTrain = (p.trainDays || []).includes(parse(id).getDay()), sess = +p.sessMin || 60;
+  let trainAt = toMin(p.trainTime || "18:00"); if (trainAt < wake) trainAt += 1440;
+  const I = [], add = (m, ic, txt, done, sub) => I.push({m, ic, txt, done:!!done, sub});
+  add(wake, "☀️", "Despertar", d.wake, "Toca 'Me desperté'");
+  add(wake + 15, "🌤️", "Sol de mañana, 15 min", (d.sun || 0) >= 15, "Ordena tu reloj del cuerpo");
+  // comidas: desayuno 45 min después de despertar, almuerzo 12:30, cena 2,5 h antes de dormir; las extra van en medio.
+  // En día de entreno la merienda pasa a pre-entreno (90 min antes) y la comida que sigue al entreno es la de recuperación.
+  const n = Math.max(3, +p.mealsN || 4), br = wake + 45, lu = Math.max(br + 180, 12*60 + 30), di = bed - 150;
+  const slots = [{m:br, n:"Desayuno", sub:"Con proteína: huevos, yogur o leche"}, {m:lu, n:"Almuerzo", sub:""}, {m:di, n:"Cena", sub:"Con proteína y no muy pesada"}];
+  if (n >= 4) slots.push({m:(lu + di)/2, n:"Merienda", sub:""});
+  if (n >= 5) slots.push({m:(br + lu)/2, n:"Media mañana", sub:""});
+  if (isTrain) {
+    const pre = slots.filter(s => s.n === "Merienda" || s.n === "Media mañana").sort((a,b) => Math.abs(a.m - (trainAt - 90)) - Math.abs(b.m - (trainAt - 90)))[0];
+    if (pre && Math.abs(pre.m - (trainAt - 90)) < 240) Object.assign(pre, {m: trainAt - 90, n:"Pre-entreno", sub:"Carbohidrato + algo de proteína: banano y yogur"});
+    const post = slots.filter(s => s.m > trainAt && s.m < trainAt + sess + 150).sort((a,b) => a.m - b.m)[0];
+    if (post) Object.assign(post, {n: post.n + " de recuperación", sub:"Proteína + carbohidrato: arroz, pollo o huevos"});
+  }
+  slots.sort((a,b) => a.m - b.m).forEach((s,i) => add(s.m, "🍽️", s.n, d.meals.length > i, s.sub));
+  add(14*60, "☕", "Último café del día", d.lateCaffeine === false, "Toca para marcar que cumpliste");
+  if (isTrain) { const r = nextRoutine(); add(trainAt, "💪", "Entrenar" + (r ? ": " + r.name.split(" (")[0] : ""), isStrength(d), `${sess} min · rinde más entre 4 y 7 p.m.`); }
+  else add(17*60, "🚶", "Caminar 30 minutos", (d.steps || 0) >= mode().steps*0.8, "Descanso activo");
+  add(bed - 60, "📵", "Fuera pantallas", d.screensOff === true, "Más melatonina, más sueño profundo");
+  add(bed, "🌙", "A dormir", !!day(shift(id, 1))?.bed, `${st} h de sueño`);
+  I.sort((a,b) => a.m - b.m);
+  return {items:I, isTrain, late: isTrain && trainAt > bed - 180, bed, wake, trainAt};
+}
+function renderDay(){
+  const S = schedule(cur), now = new Date(), today = cur === iso(now);
+  const nowM = now.getHours()*60 + now.getMinutes() + (now.getHours()*60 < S.wake - 60 ? 1440 : 0);
+  const nxt = today ? S.items.find(x => !x.done && x.m + 30 >= nowM) : null;
+  $("dayCard").innerHTML = `<div class="row between"><h3>Tu día</h3><span class="small muted">${S.isTrain ? "💪 día de entreno" : "día de descanso"} · ${S.items.filter(x => x.done).length} de ${S.items.length}</span></div>
+    ${S.late ? `<p class="small warn" style="margin:0">Entrenar a las ${toHHMM(S.trainAt)} te deja menos de 3 horas antes de dormir y te quita sueño. Mejor antes de las ${toHHMM(S.bed - 180)}</p>` : ""}
+    <div class="tl">${S.items.map(x => `<div class="tli ${x.done ? "done" : x === nxt ? "now" : ""}"><span class="tm">${toHHMM(x.m)}</span><span class="ic">${x.done ? "✓" : x.ic}</span><span class="tx"><b>${esc(x.txt)}</b>${x.sub ? `<span>${esc(x.sub)}</span>` : ""}</span></div>`).join("")}</div>
+    ${(profile().trainDays || []).length ? "" : `<button class="btn-ghost" data-goto="yo">Pon tus días y hora de entreno</button>`}`;
+}
+function renderHorario(){
+  const p = profile();
+  setVal("hWake", p.wakeGoal || "06:00"); setVal("hTrain", p.trainTime || "18:00");
+  setVal("hMeals", String(p.mealsN || 4)); setVal("hSess", String(p.sessMin || 60));
+  $("hDays").innerHTML = [1,2,3,4,5,6,0].map(i => `<button class="pill" data-dow="${i}" aria-pressed="${(p.trainDays || []).includes(i)}">${DOW[i]}</button>`).join("");
+  const S = schedule(cur), nD = (p.trainDays || []).length;
+  $("hMsg").innerHTML = `Te acuestas a las <b>${toHHMM(S.bed)}</b> para dormir ${sleepGoal(targets())} h. ${nD ? `Entrenas <b>${nD} días</b> a la semana${nD <= 3 ? " con rutinas de cuerpo completo (lo esencial)" : ""}.` : "Escoge tus días de entreno."}`;
+}
+[["hWake","wakeGoal"],["hTrain","trainTime"],["hMeals","mealsN",1],["hSess","sessMin",1]].forEach(([id,k,num]) =>
+  $(id).addEventListener("change", e => { if (!e.target.value) return; profile()[k] = num ? +e.target.value : e.target.value; store.save(); render(); }));
+$("hDays").onclick = e => {
+  const b = e.target.closest("[data-dow]"); if (!b) return;
+  const p = profile(), s = new Set(p.trainDays || []), dw = +b.dataset.dow;
+  s.has(dw) ? s.delete(dw) : s.add(dw); p.trainDays = [...s].sort();
+  if (p.trainDays.length && p.trainDays.length <= 3 && ensureEssentials()) toast("Agregué rutinas de cuerpo completo para 3 días 💪");
+  store.save(); render();
+};
+
+/* ---------- plan de metas: fases, hitos cada 4 semanas y real contra esperado ---------- */
+function weightNear(id, span = 3){
+  const v = Array.from({length:span*2 + 1}, (_,i) => day(shift(id, i - span))?.weight).filter(Boolean).map(Number);
+  return v.length ? v.reduce((a,b) => a+b, 0)/v.length : null;
+}
+function renderPlanCard(t){
+  const p = profile(), el = $("planCard"), M = mode();
+  if (!t || !p.goalW || M.dir === 0 || !t.adj) { el.innerHTML = `<h3>Tu plan</h3><p class="small muted">Pon tu peso meta y escoge déficit, recomposición, superávit o volumen. Con eso armo tu plan por fases, con hitos cada 4 semanas.</p><button class="btn-main" data-goto="yo">Poner mi meta</button>`; return; }
+  if (!p.planStart) { p.planStart = cur; p.startW = p.startW || t.w; store.save(); }
+  const start = p.planStart, sw = +p.startW || t.w, kg = Math.max(0.05, kgPerWeek(t)), dir = Math.sign(p.goalW - sw) || M.dir;
+  const weeks = Math.max(1, Math.min(78, Math.ceil(Math.abs(p.goalW - sw)/kg)));
+  const daysIn = Math.max(0, Math.round((parse(cur) - parse(start))/864e5)), wkIn = daysIn/7;
+  const exp = w => { const v = sw + dir*kg*w; return dir > 0 ? Math.min(v, p.goalW) : Math.max(v, p.goalW); };
+  const end = new Date(parse(start)); end.setDate(end.getDate() + weeks*7);
+  const PH = [["Base","Semanas 1-4","Hábitos: dormir a tu hora, entrenar tus días y proteína diaria"],["Progresión","Semanas 5-12","Subir pesos cada semana y ajustar calorías con el peso"],["Meta","Semana 13 en adelante","Mantener el ritmo hasta llegar y luego estabilizar"]];
+  const phNow = wkIn < 4 ? 0 : wkIn < 12 ? 1 : 2;
+  // hitos cada 4 semanas, más el final
+  const ms = []; for (let w = 4; w < weeks; w += 4) ms.push(w); ms.push(weeks);
+  const mil = ms.slice(0, 8).map(w => { const id = shift(start, w*7), e = exp(w), r = id <= cur ? weightNear(id) : null;
+    const ok = r == null ? null : dir < 0 ? r <= e + 0.3 : r >= e - 0.3;
+    return `<div class="mil"><span class="muted">${parse(id).getDate()} ${MONTHS[parse(id).getMonth()]}</span><span>Semana ${w}: <b>${r1(e)} kg</b>${w === weeks ? " 🏁" : ""}</span><span class="st ${ok == null ? "muted" : ok ? "ok" : "warn"}">${r == null ? (id <= cur ? "sin peso" : "pendiente") : (ok ? "✓ " : "") + r1(r) + " kg"}</span></div>`; }).join("");
+  // gráfica: línea esperada contra pesos reales desde el inicio del plan
+  const W = 320, H = 140, L = 34, R = 10, T = 12, B = 22, span = Math.max(4, Math.min(weeks, Math.ceil(wkIn) + 4));
+  const pts = Object.keys(cache).filter(k => k.startsWith("d-") && k >= "d-" + start && cache[k]?.weight).sort().map(k => [Math.round((parse(k.slice(2)) - parse(start))/864e5)/7, +cache[k].weight]);
+  const vals = [sw, exp(span), ...pts.map(x => x[1])], lo = Math.floor(Math.min(...vals) - 0.5), hi = Math.ceil(Math.max(...vals) + 0.5);
+  const X = w => L + w/span*(W - L - R), Y = v => T + (hi - v)/(hi - lo || 1)*(H - T - B);
+  const svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Peso esperado contra peso real">
+    ${[lo, hi].map(v => `<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${Y(v)+4}" text-anchor="end" font-size="10" fill="var(--muted)">${v}</text>`).join("")}
+    <line x1="${X(0)}" y1="${Y(sw)}" x2="${X(span)}" y2="${Y(exp(span))}" stroke="var(--horm)" stroke-width="2" stroke-dasharray="5 4"/>
+    <line x1="${X(Math.min(wkIn, span))}" x2="${X(Math.min(wkIn, span))}" y1="${T}" y2="${H-B}" stroke="var(--muted)" stroke-opacity=".4"/>
+    ${pts.length > 1 ? `<polyline points="${pts.map(x => X(x[0]).toFixed(1) + "," + Y(x[1]).toFixed(1)).join(" ")}" fill="none" stroke="var(--prot)" stroke-width="2.5" stroke-linejoin="round"/>` : ""}
+    ${pts.map(x => `<circle cx="${X(x[0])}" cy="${Y(x[1])}" r="3" fill="var(--prot)"/>`).join("")}
+    <text x="${L}" y="${H-6}" font-size="10" fill="var(--muted)">semana 0</text><text x="${W-R}" y="${H-6}" text-anchor="end" font-size="10" fill="var(--muted)">semana ${span}</text></svg>`;
+  // la semana: lo que se planeó contra lo que pasó
+  const wk = Array.from({length:7}, (_,i) => shift(cur, -i)), S0 = schedule(cur);
+  const gymP = (p.trainDays || []).length || M.gym, gymD = wk.filter(id => isStrength(day(id) || {})).length;
+  const onTime = wk.filter(id => { const b = day(id)?.bed; return b && Math.abs(nightMin(b) - S0.bed) <= 30; }).length;
+  const protD = wk.filter(id => { const x = day(id); return x?.meals?.length && totals(x).prot >= t.prot*0.9; }).length;
+  const logD = wk.filter(id => hasData(day(id))).length;
+  const sc = (n, l, of) => `<div class="stat"><span class="label">${l}</span><span class="v ${n >= of ? "ok" : n >= of*0.6 ? "warn" : "bad"}">${n}/${of}</span></div>`;
+  const wNow = weightNear(cur, 2) ?? t.w, eNow = exp(wkIn), diff = (wNow - eNow)*dir;
+  el.innerHTML = `<div class="row between"><h3>Tu plan: ${r1(sw)} → ${p.goalW} kg</h3><span class="small muted">${weeks} semanas · hasta ${end.getDate()} ${MONTHS[end.getMonth()]}${end.getFullYear() !== parse(cur).getFullYear() ? " " + end.getFullYear() : ""}</span></div>
+    <div class="phases">${PH.map((x,i) => `<div class="ph ${i === phNow ? "on" : ""}"><b>${i+1}. ${x[0]}</b><span>${x[1]}</span><span>${x[2]}</span></div>`).join("")}</div>
+    <p class="small" style="margin:0">Semana ${Math.floor(wkIn) + 1}. Deberías ir en <b>${r1(eNow)} kg</b> y vas en <b>${r1(wNow)} kg</b>: ${Math.abs(wNow - eNow) < 0.4 ? `<span class="ok">vas en el plan</span>` : diff > 0 ? `<span class="ok">vas adelantado</span>` : `<span class="warn">vas atrasado ${r1(Math.abs(wNow - eNow))} kg</span>`}.</p>
+    <div class="chart">${svg}</div>
+    <div class="label">Esta semana</div>
+    <div class="score4">${sc(gymD, "Entrenos", gymP)}${sc(onTime, "Noches a tu hora", 7)}${sc(protD, "Días con proteína", 7)}${sc(logD, "Días anotados", 7)}</div>
+    <div class="label">Hitos</div><div>${mil}</div>
+    <button class="btn-ghost small" id="planReset">Reiniciar plan desde hoy</button>`;
+}
+$("planCard").addEventListener("click", e => { if (e.target.id !== "planReset") return; const p = profile(); p.planStart = cur; p.startW = lastWeight(); store.save(); render(); toast("Plan reiniciado desde hoy"); });
+
 /* ---------- hoy te toca: entrenador y nutricionista con reglas ---------- */
 const FOODS = {
   lean: ["Pechuga 150 g: 250 kcal, 46 g de proteína", "Lata de atún: 130 kcal, 29 g", "Yogur griego 200 g: 130 kcal, 20 g", "4 claras + 1 huevo: 140 kcal, 20 g"],
@@ -1363,7 +1517,10 @@ const FOODS = {
 };
 // la rutina que hace más tiempo no haces (o nunca)
 function nextRoutine(){
-  const R = routines().items; if (!R.length) return null;
+  let R = routines().items; if (!R.length) return null;
+  // con 3 días o menos rota solo las de cuerpo completo
+  const fb = R.filter(r => r.id.startsWith("fb"));
+  if ((profile().trainDays || []).length && profile().trainDays.length <= 3 && fb.length) R = fb;
   const lastDone = id => Object.keys(cache).filter(k => k.startsWith("d-") && k < "d-"+cur && cache[k]?.workout?.rid === id && cache[k].workout.finished).sort().pop() || "";
   return R.slice().sort((a,b) => lastDone(a.id).localeCompare(lastDone(b.id)))[0];
 }
@@ -1374,13 +1531,18 @@ function renderTodo(d, t, tot){
   const gymN = week.filter(isStrength).length, cardioN = week.filter(x => actsOf(x).some(a => CARDIO.includes(a.type))).length;
   let streak = 0; for (let i = 1; i <= 6; i++) { const x = day(shift(cur, -i)); if (x && actsOf(x).some(a => a.type !== "caminar")) streak++; else break; }
   const sh = sleepHours(d), done = actsOf(d).filter(a => a.type !== "caminar"), steps = d.steps ?? 0;
+  const plan = (p.trainDays || []).length ? p.trainDays : null, dow = parse(cur).getDay(), gymTarget = plan ? plan.length : M.gym;
   // ENTRENAMIENTO
   let train, btn = "";
   if (done.length) train = `Ya entrenaste hoy (${fmt(t.exK)} kcal). Ahora recupera: proteína en la siguiente comida, agua y 10 minutos de estiramiento.`;
   else if (d.exType === "descanso") train = `Hoy es descanso. Camina para llegar a ${fmt(M.steps)} pasos: suma sin cansar los músculos.`;
   else if (sh != null && sh < 6) train = `Dormiste ${sh.toFixed(1)} h. Hoy mejor suave: camina 30-40 minutos o haz movilidad. Pesas pesadas con poco sueño rinden menos y te puedes lesionar.`;
-  else if (streak >= 3) train = `Llevas ${streak} días seguidos entrenando. Hoy descansa o camina: el músculo crece cuando descansas.`;
-  else if (gymN < M.gym) { const r = nextRoutine(); train = `Hoy toca pesas${r ? ": <b>" + esc(r.name) + "</b>" : ""}. Llevas ${gymN} de ${M.gym} días de pesas esta semana. Intenta subir 1 repetición o 2,5 kg frente a la vez pasada.`; if (r) btn = `<button class="btn-main" data-start="${r.id}">Entrenar ${esc(r.name.split(" (")[0])}</button>`; }
+  else if (!plan && streak >= 3) train = `Llevas ${streak} días seguidos entrenando. Hoy descansa o camina: el músculo crece cuando descansas.`;
+  else if (plan && !plan.includes(dow)) { const nx = nextTrainDay(cur);
+    train = `Hoy no es día de pesas. Descanso activo: camina hasta ${fmt(M.steps)} pasos${cardioN < M.cardio ? " o haz 20-30 minutos de cardio suave" : ""}. Próximo entreno: <b>${nx ? (nx.days === 1 ? "mañana" : DOWL[nx.dow]) : "—"} a las ${toHHMM(toMin(p.trainTime || "18:00"))}</b>.`; }
+  else if (plan || gymN < gymTarget) { const r = nextRoutine();
+    train = `Hoy toca pesas${r ? ": <b>" + esc(r.name) + "</b>" : ""}${plan ? " a las <b>" + toHHMM(toMin(p.trainTime || "18:00")) + "</b>" : ""}, ${p.sessMin || 60} minutos. Llevas ${gymN} de ${gymTarget} días esta semana. Intenta subir 1 repetición o 2,5 kg frente a la vez pasada.`;
+    if (r) btn = `<button class="btn-main" data-start="${r.id}">Entrenar ${esc(r.name.split(" (")[0])}</button>`; }
   else if (cardioN < M.cardio) train = `Hoy toca cardio: 25-35 minutos de trote, bici o un partido a ritmo moderado (unas ${fmt(actKcal({type:"correr", min:30, int:1}, t.w))} kcal). Llevas ${cardioN} de ${M.cardio} esta semana.`;
   else train = `Ya cumpliste la semana (${gymN} de pesas, ${cardioN} de cardio). Hoy camina o descansa.`;
   // COMIDA
@@ -1402,7 +1564,7 @@ function renderTodo(d, t, tot){
   el.innerHTML = `<div class="row between"><h3>Hoy te toca</h3><span class="small muted">modo ${M.n.toLowerCase()}</span></div>
     <div class="todo-b"><div class="hd">💪 Entrenamiento</div><p>${train}</p>${btn}<span class="small muted">Pasos: ${fmt(steps)} de ${fmt(M.steps)}</span></div>
     <div class="todo-b"><div class="hd">🍽️ Comida</div><p>${food}</p>${ideas.length ? `<ul>${ideas.map(x => `<li>${x}</li>`).join("")}</ul>` : ""}</div>
-    <div class="todo-b"><div class="hd">🌙 Sueño</div><p>Para dormir ${st} h y levantarte a las ${toHHMM(wake)}: acuéstate a las <b>${toHHMM(bed)}</b>.</p><ul>${sleepTips.map(x => `<li>${x}</li>`).join("")}</ul></div>`;
+    <div class="todo-b"><div class="hd">🌙 Sueño</div><p>Para dormir ${st} h y levantarte a las ${toHHMM(wake)}: acuéstate a las <b>${toHHMM(bed)}</b></p><ul>${sleepTips.map(x => `<li>${x}</li>`).join("")}</ul></div>`;
 }
 $("todo").addEventListener("click", e => {
   const b = e.target.closest("[data-start]"); if (!b) return;
@@ -1468,7 +1630,18 @@ const DEFAULT_ROUTINES = [
   {id:"jalon", name:"Jalón (espalda, bíceps)", ex:[["Dominadas",4,8],["Remo con barra",4,10],["Jalón al pecho",3,12],["Curl de bíceps",3,12],["Face pull",3,15]]},
   {id:"pierna", name:"Pierna", ex:[["Sentadilla",4,8],["Peso muerto rumano",3,10],["Prensa",3,12],["Zancadas",3,10],["Pantorrilla",4,15]]},
 ];
-const routines = () => cache.routines || (cache.routines = {items: structuredClone(DEFAULT_ROUTINES)});
+// 3 días a la semana, cuerpo completo, solo lo básico que más rinde
+const ESSENTIALS = [
+  {id:"fbA", name:"Cuerpo completo A (esencial)", ex:[["Sentadilla",3,8],["Press de banca",3,8],["Remo con barra",3,10],["Plancha (segundos)",3,40]]},
+  {id:"fbB", name:"Cuerpo completo B (esencial)", ex:[["Peso muerto rumano",3,8],["Press militar",3,10],["Dominadas o jalón al pecho",3,8],["Zancadas",3,10]]},
+  {id:"fbC", name:"Cuerpo completo C (esencial)", ex:[["Prensa o sentadilla goblet",3,10],["Press inclinado con mancuernas",3,10],["Remo con mancuerna",3,10],["Hip thrust",3,10]]},
+];
+const routines = () => cache.routines || (cache.routines = {items: structuredClone([...ESSENTIALS, ...DEFAULT_ROUTINES])});
+function ensureEssentials(){
+  const R = routines(); let n = 0;
+  ESSENTIALS.forEach(e => { if (!R.items.some(x => x.id === e.id)) { R.items.unshift(structuredClone(e)); n++; } });
+  return n;
+}
 let editingRoutine = null;
 function renderRoutines(){
   const R = routines().items;
