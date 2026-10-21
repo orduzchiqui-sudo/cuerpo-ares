@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Cuerpo Ares</title>
-<meta name="theme-color" content="#0A0C11">
+<meta name="theme-color" content="#F5F6F8">
 <meta name="description" content="Calorías por foto, nutrientes, sueño, ejercicio y hábitos hormonales.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
@@ -12,16 +12,17 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap">
 <style>
 /* Layout: app de celular oscura — barra superior con fecha, pantallas por pestaña, barra inferior con cámara al centro.
    Un solo look oscuro a propósito (app nocturna de salud), con colores fijos por métrica. */
 :root{
-  color-scheme:dark;
-  --bg:#0A0C11; --surface:#141822; --surface2:#1B2130; --line:#252C3C; --ink:#F2F4F9; --muted:#8B94A8;
-  --kcal:#FF7A45; --prot:#38D99A; --sleep:#8B8CFF; --horm:#F4C34A; --water:#4CB8FF; --bad:#FF5D6C;
-  --night1:#1A1B4B; --night2:#0B0D22;
-  --f-display:"Unbounded", "Segoe UI", system-ui, sans-serif;
+  color-scheme:light;
+  --bg:#F5F6F8; --surface:#FFFFFF; --surface2:#F0F2F6; --line:#E4E7ED; --ink:#10141B; --muted:#687083;
+  --kcal:#EE6232; --prot:#11995A; --sleep:#5856D6; --horm:#D08F00; --water:#1C8AD3; --bad:#E0434A;
+  --night1:#F2F3FF; --night2:#E5E8FF; --night-ink:#3A3E8C;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 6px 22px rgba(16,24,40,.06); --shadow-up:0 2px 4px rgba(16,24,40,.06),0 14px 34px rgba(16,24,40,.10);
+  --f-display:"Sora", "Segoe UI", system-ui, sans-serif;
   --f-body:"Manrope", "Segoe UI", system-ui, sans-serif;
   --tabbar:72px;
 }
@@ -48,7 +49,7 @@ button:disabled{opacity:.45;cursor:default}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,label:focus-within{outline:2px solid var(--sleep);outline-offset:2px}
 input,select,textarea{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0;width:100%}
 input::placeholder,textarea::placeholder{color:var(--muted)}
-.btn-main{background:var(--kcal);color:#1A0D06;font-weight:800}
+.btn-main{background:var(--kcal);color:#fff;font-weight:800;box-shadow:0 6px 16px rgba(238,98,50,.25)}
 .btn-ghost{background:transparent;border:1px solid var(--line)}
 
 /* barra superior */
@@ -66,7 +67,20 @@ input::placeholder,textarea::placeholder{color:var(--muted)}
 .dot.on{background:var(--prot)}
 
 .screen{display:grid;gap:14px;padding-top:6px}
-.card{background:var(--surface);border-radius:20px;padding:18px;display:grid;gap:14px;min-width:0}
+.card{background:var(--surface);border-radius:20px;padding:18px;display:grid;gap:14px;min-width:0;border:1px solid var(--line);box-shadow:var(--shadow);transition:box-shadow .25s,transform .25s}
+@media (hover:hover){.card:hover{box-shadow:var(--shadow-up)}}
+.night{color:var(--ink)}
+button{transition:transform .12s ease,background-color .2s,color .2s,box-shadow .2s}
+button:active{transform:scale(.96)}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 4px rgba(238,98,50,.18)}50%{box-shadow:0 0 0 8px rgba(238,98,50,.06)}}
+@keyframes pop2{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
+.screen.enter>*{animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+.screen.enter>*:nth-child(2){animation-delay:.04s}.screen.enter>*:nth-child(3){animation-delay:.08s}.screen.enter>*:nth-child(4){animation-delay:.12s}
+.screen.enter>*:nth-child(5){animation-delay:.16s}.screen.enter>*:nth-child(6){animation-delay:.2s}.screen.enter>*:nth-child(n+7){animation-delay:.24s}
+.tab[aria-current=page] svg{animation:pop2 .3s ease}
+.tab[aria-current=page]::after{content:"";width:18px;height:3px;border-radius:3px;background:var(--kcal);margin-top:2px}
+@media (prefers-reduced-motion:reduce){.screen.enter>*,.tab[aria-current=page] svg,.tli.now .ic{animation:none}button:active{transform:none}}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .between{justify-content:space-between}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -84,7 +98,7 @@ input::placeholder,textarea::placeholder{color:var(--muted)}
 .task .tx small{display:block;font-weight:500;color:var(--muted);font-size:12px}
 .task .go{font-size:12px;color:var(--muted)}
 .task.done{opacity:.55}
-.task.done .tk{background:var(--prot);border-color:var(--prot);color:#06170F}
+.task.done .tk{background:var(--prot);border-color:var(--prot);color:#fff}
 .task.done .tx{text-decoration:line-through}
 /* bienvenida */
 .onb{position:fixed;inset:0;z-index:20;background:var(--bg);overflow-y:auto;
@@ -98,18 +112,18 @@ input::placeholder,textarea::placeholder{color:var(--muted)}
 /* nivel, meta y avisos */
 .lvl{display:grid;gap:5px}
 .lvl .top2{display:flex;justify-content:space-between;font-size:12.5px;font-weight:700}
-.nowcard{background:linear-gradient(135deg,#2A2470,#16173A);border:1px solid #3A3A8A}
-.nowcard .sbtn{background:var(--sleep);color:#0B0D22;font-size:16px;padding:14px}
+.nowcard{background:linear-gradient(135deg,#F1F2FF,#E4E7FF);border:1px solid #D9DCFF}
+.nowcard .sbtn{background:var(--sleep);color:#fff;font-size:16px;padding:14px}
 .goalbar{position:relative;height:10px;border-radius:9px;background:var(--surface2)}
 .goalbar i{position:absolute;left:0;top:0;bottom:0;border-radius:9px;background:linear-gradient(90deg,var(--kcal),var(--horm))}
 .goalbar b{position:absolute;top:-4px;width:18px;height:18px;border-radius:50%;background:var(--ink);border:3px solid var(--bg);transform:translateX(-50%)}
-.sbtn{background:#ffffff18;color:#fff;font-weight:700;padding:12px;border-radius:14px;text-align:center;cursor:pointer;position:relative}
+.sbtn{background:#fff;color:var(--night-ink);border:1px solid #D9DCFF;font-weight:700;padding:12px;border-radius:14px;text-align:center;cursor:pointer;position:relative}
 .sbtn.photo{display:block;font-size:14px}
 .sbtn.lite{background:var(--surface2);color:var(--ink)}
 .modes{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
 .modes::-webkit-scrollbar{display:none}
 .modes button{flex:none;padding:8px 12px;border-radius:99px;font-size:13px;background:var(--surface2)}
-.modes button[aria-pressed=true]{background:var(--kcal);color:#1A0D06}
+.modes button[aria-pressed=true]{background:var(--ink);color:#fff}
 .bal{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:6px;align-items:center;text-align:center}
 .bal .v{font-size:19px;font-weight:800;display:block}
 .bal .op{color:var(--muted);font-weight:800}
@@ -130,9 +144,9 @@ input::placeholder,textarea::placeholder{color:var(--muted)}
 .tli:not(:last-child)::before{content:"";position:absolute;left:94px;top:30px;bottom:-6px;width:2px;background:var(--line)}
 .tli .tx b{display:block;font-size:14px}
 .tli .tx span{font-size:12px;color:var(--muted)}
-.tli.done .ic{background:var(--prot);color:#06170F}
+.tli.done .ic{background:var(--prot);color:#fff}
 .tli.done .tx b{color:var(--muted);text-decoration:line-through}
-.tli.now .ic{background:var(--kcal);box-shadow:0 0 0 4px #FF7A4533}
+.tli.now .ic{background:var(--kcal);color:#fff;box-shadow:0 0 0 4px rgba(238,98,50,.18);animation:pulse 1.8s ease-in-out infinite}
 .tli.now .tx b{color:var(--kcal)}
 /* plan de metas */
 .phases{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
@@ -142,11 +156,31 @@ input::placeholder,textarea::placeholder{color:var(--muted)}
 .mil{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-size:13.5px}
 .mil .st{font-weight:800}
 .score4{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+/* guía de nutrientes */
+.mguide{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media (max-width:440px){.mguide{grid-template-columns:1fr}}
+.mguide>div{background:var(--surface2);border-radius:14px;padding:12px;display:grid;gap:2px}
+.mguide b{font-size:20px;font-weight:800}
+.mguide span{font-size:12px;color:var(--muted);font-weight:700}
+.mguide p{margin:4px 0 0;font-size:12.5px;color:var(--muted)}
+.guide{display:grid;gap:6px}
+.gitem{border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.gitem summary{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px;list-style:none}
+.gitem summary::-webkit-details-marker{display:none}
+.gitem summary::after,.gitem[open] summary::after{content:none}
+.gitem summary small{display:block;font-size:11.5px;color:var(--muted);font-weight:600}
+.gitem p{margin:8px 0;font-size:13.5px}
+.flist{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.flist li{display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-size:13.5px}
+.flist li small{color:var(--muted)}
+.flist li i{grid-column:1/-1;height:4px;border-radius:4px;background:var(--prot);opacity:.7}
+.gap{display:grid;gap:5px;padding:10px 0;border-top:1px solid var(--line)}
+.gap:first-of-type{border-top:0}
 /* siestas */
 .napbtns{display:flex;flex-wrap:wrap;gap:6px}
-.napbtns button{background:#ffffff18;color:#fff;padding:8px 12px;border-radius:99px;font-size:13px}
-.nap{display:flex;justify-content:space-between;align-items:center;font-size:13.5px;color:#E3E4FF;padding:4px 0}
-.nap button{background:transparent;color:#C9CBFF;padding:2px 8px}
+.napbtns button{background:#fff;color:var(--night-ink);border:1px solid #D9DCFF;padding:8px 12px;border-radius:99px;font-size:13px}
+.nap{display:flex;justify-content:space-between;align-items:center;font-size:13.5px;color:var(--night-ink);padding:4px 0}
+.nap button{background:transparent;color:var(--night-ink);padding:2px 8px}
 /* reporte */
 @media (max-width:400px){.brand b,.brand .status{display:none}}
 .rday{background:var(--surface);border-radius:18px;padding:14px 16px;display:grid;gap:10px}
@@ -184,7 +218,7 @@ input::placeholder,textarea::placeholder{color:var(--muted)}
 .wset input{padding:8px 10px;text-align:center}
 .wset .n{font-size:12px;color:var(--muted);text-align:center;font-weight:700}
 .wset button{padding:8px 0;background:var(--surface)}
-.wset button[aria-pressed=true]{background:var(--prot);color:#06170F}
+.wset button[aria-pressed=true]{background:var(--prot);color:#fff}
 /* toast y celebración */
 .toast{position:fixed;left:50%;bottom:calc(var(--tabbar) + 22px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);opacity:0;z-index:30;
   background:var(--ink);color:var(--bg);font-weight:800;padding:12px 18px;border-radius:99px;transition:.25s;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
@@ -254,21 +288,21 @@ details[open] summary::after{content:" −"}
 .tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:2px 7px;border-radius:99px;background:var(--surface2);color:var(--sleep);margin-left:6px;vertical-align:1px}
 
 /* sueño */
-.night{background:radial-gradient(120% 90% at 85% 0%,#3A2F7A 0%,transparent 55%),linear-gradient(160deg,var(--night1),var(--night2));position:relative;overflow:hidden}
-.night::before{content:"";position:absolute;inset:0;background-image:radial-gradient(1.2px 1.2px at 12% 22%,#fff8,transparent),radial-gradient(1px 1px at 72% 14%,#fff7,transparent),radial-gradient(1.4px 1.4px at 88% 48%,#fff6,transparent),radial-gradient(1px 1px at 34% 62%,#fff5,transparent),radial-gradient(1.2px 1.2px at 58% 36%,#fff6,transparent);pointer-events:none}
+.night{background:radial-gradient(120% 90% at 85% 0%,#D9DCFF 0%,transparent 55%),linear-gradient(160deg,var(--night1),var(--night2));position:relative;overflow:hidden}
+.night::before{content:"";position:absolute;inset:0;background-image:radial-gradient(1.2px 1.2px at 12% 22%,rgba(88,86,214,.35),transparent),radial-gradient(1px 1px at 72% 14%,rgba(88,86,214,.3),transparent),radial-gradient(1.4px 1.4px at 88% 48%,rgba(88,86,214,.3),transparent),radial-gradient(1px 1px at 34% 62%,rgba(88,86,214,.25),transparent),radial-gradient(1.2px 1.2px at 58% 36%,rgba(88,86,214,.3),transparent);pointer-events:none}
 .night > *{position:relative}
 .bigh{font-size:54px;line-height:1}
 .bigh small{font-size:20px;color:var(--muted)}
 .scale{display:flex;gap:6px}
 .scale button{flex:1;min-width:34px;padding:8px 0;background:var(--surface2)}
-.scale button[aria-pressed=true]{background:var(--sleep);color:#0B0D22}
-.night .scale button{background:#ffffff14}
+.scale button[aria-pressed=true]{background:var(--sleep);color:#fff}
+.night .scale button{background:#fff}
 .night .scale button[aria-pressed=true]{background:var(--sleep)}
-.night input{background:#ffffff12;border-color:#ffffff22}
+.night input{background:#fff;border-color:#D9DCFF}
 .bars{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;align-items:end;height:140px;position:relative}
 .bars .c{display:grid;align-items:end;height:100%}
 .bars .c i{display:block;border-radius:8px 8px 4px 4px;min-height:4px;background:linear-gradient(to top,var(--c1),var(--c2))}
-.bars .t{position:absolute;left:0;right:0;border-top:1.5px dashed #ffffff55;pointer-events:none}
+.bars .t{position:absolute;left:0;right:0;border-top:1.5px dashed rgba(16,20,27,.25);pointer-events:none}
 .bars .t span{position:absolute;right:0;top:-18px;font-size:10px;color:var(--muted);font-weight:700}
 .bx{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;text-align:center;font-size:11px;color:var(--muted);font-weight:600}
 .bx b{display:block;color:var(--ink);font-size:11px}
@@ -278,13 +312,13 @@ details[open] summary::after{content:" −"}
 .tchips{display:flex;gap:8px;flex-wrap:wrap}
 .tchip{background:var(--surface2);border-radius:14px;padding:10px 14px;display:grid;gap:0}
 .tchip b{font-size:18px}
-.tchip.best{background:var(--sleep);color:#0B0D22}
-.tchip.best span{color:#0B0D22aa}
+.tchip.best{background:var(--sleep);color:#fff}
+.tchip.best span{color:rgba(255,255,255,.85)}
 
 /* cuerpo */
 .pills{display:flex;gap:6px;flex-wrap:wrap}
 .pill{padding:8px 12px;border-radius:99px;background:var(--surface2);font-size:13px}
-.pill[aria-pressed=true]{background:var(--prot);color:#06170F}
+.pill[aria-pressed=true]{background:var(--prot);color:#fff}
 .switch{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 0;cursor:pointer}
 .switch input{appearance:none;width:46px;height:28px;border-radius:99px;background:var(--surface2);border:1px solid var(--line);position:relative;padding:0;flex:none;cursor:pointer}
 .switch input::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--muted);transition:left .2s}
@@ -308,7 +342,7 @@ textarea{min-height:70px;resize:vertical}
 .tab svg{width:22px;height:22px}
 .tab[aria-current=page]{color:var(--ink)}
 .tab[aria-current=page] svg{color:var(--kcal)}
-.camtab{justify-self:center;width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--kcal),#FF4F7B);display:grid;place-items:center;margin-top:-26px;box-shadow:0 8px 24px #FF6A4A55;cursor:pointer;position:relative}
+.camtab{justify-self:center;width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#F2703F,#E8456A);border:4px solid var(--surface);display:grid;place-items:center;margin-top:-26px;box-shadow:0 8px 24px #FF6A4A55;cursor:pointer;position:relative}
 .camtab.off{filter:grayscale(1);opacity:.5;cursor:default}
 .camtab svg{width:26px;height:26px;color:#fff}
 .camtab input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
@@ -443,6 +477,16 @@ textarea{min-height:70px;resize:vertical}
       <div id="nutr" style="display:grid;gap:18px"></div>
       <p class="note">Zinc, magnesio, vitamina D y omega-3 son los que más pesan en la testosterona. La foto y el texto traen todos los nutrientes; las porciones rápidas solo algunos.</p>
     </div>
+
+    <div class="card" id="gapCard"></div>
+
+    <div class="card">
+      <div class="row between"><h3>Guía de nutrientes</h3><span class="small muted">qué hace y dónde está</span></div>
+      <div id="macroGuide"></div>
+      <div class="label">Vitaminas y minerales</div>
+      <div id="guide" class="guide"></div>
+      <p class="note">Metas: ingestas diarias recomendadas del Instituto de Medicina de EE. UU. (las que usa el NIH) para tu edad y sexo. Cantidades por porción aproximadas, de las tablas del USDA; para alimentos colombianos la referencia es la Tabla de Composición del ICBF.</p>
+    </div>
   </main>
 
   <!-- SUEÑO -->
@@ -454,23 +498,23 @@ textarea{min-height:70px;resize:vertical}
         <button class="sbtn" id="goWake">☀️ Me desperté</button>
       </div>
       <label class="sbtn photo" id="sleepPhotoLbl">📷 Foto de mi reloj o app de sueño<input type="file" id="sleepPhoto" accept="image/*"></label>
-      <div class="small" id="sleepPhotoMsg" style="color:#C9CBFF"></div>
-      <div class="label" style="color:#C9CBFF">Anoche</div>
+      <div class="small" id="sleepPhotoMsg" style="color:var(--night-ink)"></div>
+      <div class="label" style="color:var(--night-ink)">Anoche</div>
       <div class="disp bigh" id="sleepBig">—</div>
-      <div class="small" id="sleepMsg" style="color:#C9CBFF"></div>
+      <div class="small" id="sleepMsg" style="color:var(--night-ink)"></div>
       <div id="phases"></div>
       <div class="field">
-        <div class="row between"><span class="label" style="color:#C9CBFF">Siestas de hoy</span><span class="small" id="napTot" style="color:#C9CBFF"></span></div>
+        <div class="row between"><span class="label" style="color:var(--night-ink)">Siestas de hoy</span><span class="small" id="napTot" style="color:var(--night-ink)"></span></div>
         <div id="napList"></div>
         <div class="napbtns" id="napBtns"><button data-nap="20">+20 min</button><button data-nap="30">+30 min</button><button data-nap="45">+45 min</button><button data-nap="60">+1 h</button><button data-nap="90">+1 h 30</button></div>
-        <label class="field"><span class="label" style="color:#C9CBFF">Empezó a las (opcional, si no, cuenta hasta ahora)</span><input type="time" id="napStart"></label>
-        <div class="small" id="napTip" style="color:#C9CBFF"></div>
+        <label class="field"><span class="label" style="color:var(--night-ink)">Empezó a las (opcional, si no, cuenta hasta ahora)</span><input type="time" id="napStart"></label>
+        <div class="small" id="napTip" style="color:var(--night-ink)"></div>
       </div>
       <div class="grid2">
-        <label class="field"><span class="label" style="color:#C9CBFF">Me acosté</span><input type="time" id="bed"></label>
-        <label class="field"><span class="label" style="color:#C9CBFF">Me levanté</span><input type="time" id="wake"></label>
+        <label class="field"><span class="label" style="color:var(--night-ink)">Me acosté</span><input type="time" id="bed"></label>
+        <label class="field"><span class="label" style="color:var(--night-ink)">Me levanté</span><input type="time" id="wake"></label>
       </div>
-      <div class="field"><span class="label" style="color:#C9CBFF">Cómo dormí</span><div class="scale" id="sleepQ"></div></div>
+      <div class="field"><span class="label" style="color:var(--night-ink)">Cómo dormí</span><div class="scale" id="sleepQ"></div></div>
       <label class="switch"><span>Sin pantallas 1 h antes de dormir</span><input type="checkbox" id="screensOff"></label>
       <label class="switch"><span>Cené 2 h o más antes de dormir</span><input type="checkbox" id="earlyDinner"></label>
     </div>
@@ -696,12 +740,12 @@ const QUICK = [
   ["Aguacate (½)",120,1.5,6,11,5,0.6,20,0]
 ];
 const QKEYS = ["kcal","prot","carb","fat","fiber","zinc","mag","vitD"];
-const NKEYS = ["kcal","prot","carb","fat","fiber","sugar","vitA","vitC","vitD","b12","folate","calcium","iron","mag","zinc","potassium","sodium","omega3"];
+const NKEYS = ["kcal","prot","carb","fat","fiber","sugar","vitA","vitC","vitD","vitE","vitK","b6","b12","folate","calcium","iron","mag","zinc","potassium","selenium","sodium","omega3"];
 // [nombre, clave, unidad, es límite máximo]
 const NGROUPS = [
   ["Macros","var(--kcal)", [["Fibra","fiber","g"],["Azúcar","sugar","g",1],["Omega-3","omega3","g"]]],
-  ["Vitaminas","var(--horm)", [["Vitamina A","vitA","µg"],["Vitamina C","vitC","mg"],["Vitamina D","vitD","µg"],["Vitamina B12","b12","µg"],["Folato","folate","µg"]]],
-  ["Minerales","var(--water)", [["Calcio","calcium","mg"],["Hierro","iron","mg"],["Magnesio","mag","mg"],["Zinc","zinc","mg"],["Potasio","potassium","mg"],["Sodio","sodium","mg",1]]]
+  ["Vitaminas","var(--horm)", [["Vitamina A","vitA","µg"],["Vitamina C","vitC","mg"],["Vitamina D","vitD","µg"],["Vitamina E","vitE","mg"],["Vitamina K","vitK","µg"],["Vitamina B6","b6","mg"],["Vitamina B12","b12","µg"],["Folato","folate","µg"]]],
+  ["Minerales","var(--water)", [["Calcio","calcium","mg"],["Hierro","iron","mg"],["Magnesio","mag","mg"],["Zinc","zinc","mg"],["Potasio","potassium","mg"],["Selenio","selenium","µg"],["Sodio","sodium","mg",1]]]
 ];
 const EXTYPES = [["fuerza","Fuerza / pesas"],["futbol","Fútbol"],["cardio","Cardio"],["caminar","Caminar"],["descanso","Descanso"]];
 const SCALES = ["sleepQ","energy","mood","anxiety","libido"];
@@ -830,7 +874,7 @@ function targets(id){
   return { kcal, prot, fat, carb: Math.max(0, Math.round((kcal - prot*4 - fat*9)/4)), fiber: f ? 25 : 38, sugar: 50,
            vitA: f ? 700 : 900, vitC: f ? 75 : 90, vitD: 15, b12: 2.4, folate: 400,
            calcium: 1000, iron: f ? 18 : 8, mag: f ? 310 : 400, zinc: f ? 8 : 11, potassium: f ? 2600 : 3400, sodium: 2300,
-           omega3: f ? 1.1 : 1.6, sleep: Number(p.sleep)||9, tdee, adj: kcal - tdee, capped: raw < floor, w, base, exK, stK, stepsAssumed, bmr: Math.round(bmr) };
+           omega3: f ? 1.1 : 1.6, vitE: 15, vitK: f ? 90 : 120, b6: 1.3, selenium: 55, sleep: Number(p.sleep)||9, tdee, adj: kcal - tdee, capped: raw < floor, w, base, exK, stK, stepsAssumed, bmr: Math.round(bmr) };
 }
 // resume la lista de actividades en los campos viejos que usan las hormonas y el plan
 function syncEx(d){
@@ -940,12 +984,12 @@ function render(){
   const name = (profile().name || "").trim().split(" ")[0], hr = new Date().getHours();
   $("hello").textContent = cur !== today ? "Ese día" : (hr < 12 ? "Buenos días" : hr < 19 ? "Buenas tardes" : "Buenas noches") + (name ? ", " + name : "");
   renderPlan(d, t);
-  renderGoal(t, tot); renderTodo(d, t, tot); renderDay(); renderHorario(); renderPlanCard(t); renderActs(d, t); renderNow(); renderPhases(d); renderRoutines(); renderWorkout(); renderRepMini(); renderHR(); if (!$("s-rep").hidden) renderReport();
+  renderGoal(t, tot); renderTodo(d, t, tot); renderDay(); renderHorario(); renderPlanCard(t); renderActs(d, t); renderNow(); renderPhases(d); renderRoutines(); renderWorkout(); renderRepMini(); renderHR(); renderGuide(t, tot); renderGaps(d, t, tot); if (!$("s-rep").hidden) renderReport();
 
   // HOY: anillos
   const ds = daySleep(d);
   $("ringsSvg").innerHTML = arc(84,84,74,t ? tot.kcal/t.kcal : 0,"var(--kcal)",14) + arc(84,84,56,t ? tot.prot/t.prot : 0,"var(--prot)",14) + arc(84,84,38,ds ? ds/st : 0,"var(--sleep)",14)
-    + `<text x="84" y="80" text-anchor="middle" fill="var(--ink)" font-family="Unbounded,sans-serif" font-weight="700" font-size="17">${t ? fmt(Math.max(0,t.kcal - tot.kcal)) : "—"}</text>
+    + `<text x="84" y="80" text-anchor="middle" fill="var(--ink)" font-family="Sora,sans-serif" font-weight="700" font-size="17">${t ? fmt(Math.max(0,t.kcal - tot.kcal)) : "—"}</text>
        <text x="84" y="97" text-anchor="middle" fill="var(--muted)" font-size="9" font-weight="700">QUEDAN</text>`;
   $("legend").innerHTML = legendItem("Calorías","var(--kcal)",fmt(tot.kcal),t && fmt(t.kcal),"kcal")
     + legendItem("Proteína","var(--prot)",fmt(tot.prot),t && t.prot,"g")
@@ -976,7 +1020,7 @@ function render(){
   const seg = (v, color) => { const f = v/kc, s = `<circle cx="60" cy="60" r="48" fill="none" stroke="${color}" stroke-width="16" stroke-dasharray="${DC*f} ${DC}" stroke-dashoffset="${-DC*off}" transform="rotate(-90 60 60)"/>`; off += f; return s; };
   $("donutSvg").innerHTML = `<circle cx="60" cy="60" r="48" fill="none" stroke="var(--surface2)" stroke-width="16"/>`
     + (tot.kcal ? seg(tot.prot*4,"var(--prot)") + seg(tot.carb*4,"var(--kcal)") + seg(tot.fat*9,"var(--horm)") : "")
-    + `<text x="60" y="58" text-anchor="middle" fill="var(--ink)" font-family="Unbounded,sans-serif" font-weight="700" font-size="16">${fmt(tot.kcal)}</text><text x="60" y="74" text-anchor="middle" fill="var(--muted)" font-size="9" font-weight="700">KCAL</text>`;
+    + `<text x="60" y="58" text-anchor="middle" fill="var(--ink)" font-family="Sora,sans-serif" font-weight="700" font-size="16">${fmt(tot.kcal)}</text><text x="60" y="74" text-anchor="middle" fill="var(--muted)" font-size="9" font-weight="700">KCAL</text>`;
   const mb = (n,k,color) => { const g = t?.[k], f = g ? tot[k]/g : 0;
     return `<div class="mbar"><div class="top2"><span><i class="sw" style="background:${color};display:inline-block;margin-right:6px"></i>${n}</span><span>${fmt(tot[k])}${g ? " / "+g : ""} g</span></div><div class="bar"><i style="width:${Math.min(100,f*100)}%;background:${color}"></i></div></div>`; };
   $("macros").innerHTML = mb("Proteína","prot","var(--prot)") + mb("Carbohidratos","carb","var(--kcal)") + mb("Grasas","fat","var(--horm)");
@@ -1023,6 +1067,7 @@ function render(){
   $("labs").innerHTML = L.length ? `<div class="tablewrap"><table><thead><tr><th>Fecha</th><th>Examen</th><th>Valor</th><th>Referencia</th><th></th></tr></thead><tbody>${
     L.map(l => `<tr><td>${esc(l.date)}</td><td>${esc(l.name)}</td><td><b>${esc(l.val)}</b> ${esc(l.unit||"")}</td><td class="muted">${esc(l.ref||"")}</td><td><button data-lab="${esc(l.id)}" aria-label="Borrar">✕</button></td></tr>`).join("")}</tbody></table></div>`
     : `<div class="empty">Sin exámenes guardados todavía.</div>`;
+  if (!$("s-hoy").hidden) playRings();
 }
 
 function renderSleepWeek(st){
@@ -1127,6 +1172,17 @@ function show(tab){
   document.querySelectorAll(".tab").forEach(b => b.dataset.tab === tab ? b.setAttribute("aria-current","page") : b.removeAttribute("aria-current"));
   try { localStorage.setItem("cuerpo-ares-tab", tab); } catch {}
   window.scrollTo(0,0);
+  // las tarjetas entran una tras otra cada vez que cambias de pestaña
+  const sc = $("s-"+tab); if (sc?.classList) { sc.classList.remove("enter"); void sc.offsetWidth; sc.classList.add("enter"); clearTimeout(show.t); show.t = setTimeout(() => sc.classList.remove("enter"), 900); }
+  if (tab === "hoy") ringsPlayed = false;
+}
+// los anillos se llenan desde cero al abrir Hoy; en los demás cambios solo se mueven
+let ringsPlayed = false;
+function playRings(){
+  if (ringsPlayed || !document.querySelectorAll) return; ringsPlayed = true;
+  const R = [...document.querySelectorAll("#ringsSvg .ring-anim, #gaugeSvg .ring-anim")];
+  R.forEach(c => { c.dataset.to = c.getAttribute("stroke-dashoffset"); c.style.transition = "none"; c.setAttribute("stroke-dashoffset", c.getAttribute("stroke-dasharray").split(" ")[0]); });
+  requestAnimationFrame(() => requestAnimationFrame(() => R.forEach(c => { c.style.transition = ""; c.setAttribute("stroke-dashoffset", c.dataset.to); })));
 }
 document.querySelectorAll(".tab").forEach(b => b.onclick = () => show(b.dataset.tab));
 $("toYo").onclick = () => show("yo");
@@ -1139,8 +1195,8 @@ const ERR = {no_key:"Falta tu clave de Gemini. Ve al ícono de persona → Ajust
   invalid_json:"Gemini no devolvió un resultado claro. Intenta otra vez, más cerca del plato.", empty:"Gemini no respondió nada. Intenta otra vez."};
 const errMsg = e => ERR[e?.code] || "No se pudo calcular. Intenta de nuevo.";
 const FOOD_JSON = `Responde SOLO un JSON con esta forma:
-{"items":[{"name":"Arroz blanco","grams":150,"kcal":195,"prot":4,"carb":43,"fat":0.4,"fiber":0.6,"sugar":0.1,"vitA":0,"vitC":0,"vitD":0,"b12":0,"folate":5,"calcium":15,"iron":0.3,"mag":18,"zinc":0.7,"potassium":55,"sodium":2,"omega3":0}],"note":"una frase corta y útil"}
-Unidades: kcal; gramos para prot, carb, fat, fiber, sugar y omega3; miligramos para vitC, calcium, iron, mag, zinc, potassium y sodium; microgramos para vitA (RAE), vitD, b12 y folate. Usa valores de tablas de composición (USDA o ICBF Colombia). Cuenta el aceite de fritura y la sal si aplica. Nombres en español.`;
+{"items":[{"name":"Arroz blanco","grams":150,"kcal":195,"prot":4,"carb":43,"fat":0.4,"fiber":0.6,"sugar":0.1,"vitA":0,"vitC":0,"vitD":0,"b12":0,"folate":5,"calcium":15,"iron":0.3,"mag":18,"zinc":0.7,"potassium":55,"sodium":2,"omega3":0,"vitE":0.1,"vitK":0,"b6":0.2,"selenium":11}],"note":"una frase corta y útil"}
+Unidades: kcal; gramos para prot, carb, fat, fiber, sugar y omega3; miligramos para vitC, vitE, b6, calcium, iron, mag, zinc, potassium y sodium; microgramos para vitA (RAE), vitD, vitK, b12, folate y selenium. Usa valores de tablas de composición (USDA o ICBF Colombia). Cuenta el aceite de fritura y la sal si aplica. Nombres en español.`;
 let found = null, foundUrl = "";
 
 async function analyze(file, text){
@@ -1580,6 +1636,83 @@ function renderPlanCard(t){
 }
 $("planCard").addEventListener("click", e => { if (e.target.id !== "planReset") return; const p = profile(); p.planStart = cur; p.startW = lastWeight(); store.save(); render(); toast("Plan reiniciado desde hoy"); });
 
+/* ---------- guía de nutrientes: para qué sirve, dónde está y cómo completarlo ---------- */
+// [alimento, porción, cantidad del nutriente en esa porción] — valores aproximados, USDA FoodData Central
+const GUIDE = {
+  prot:{n:"Proteína", u:"g", why:"Construye y repara el músculo. Te llena más que cualquier otro alimento.", tip:"Repártela en 3-4 comidas de 25-40 g; el cuerpo la aprovecha mejor así que toda de una.",
+    foods:[["Pechuga de pollo","150 g",46],["Carne de res magra","150 g",39],["Atún en lata","1 lata (120 g)",29],["Yogur griego","200 g",20],["3 huevos","3 unidades",19],["Lentejas","1 taza cocida",18],["Fríjoles","1 taza cocida",15]]},
+  fiber:{n:"Fibra", u:"g", why:"Digestión, saciedad y azúcar estable en la sangre.", tip:"Fríjol o lenteja 4-5 veces a la semana y fruta con cáscara te dejan cerca de la meta.",
+    foods:[["Lentejas","1 taza cocida",16],["Fríjoles","1 taza cocida",15],["Aguacate","½ unidad",5],["Brócoli","1 taza cocido",5],["Avena","40 g",4],["Guayaba","1 unidad",3]]},
+  omega3:{n:"Omega-3", u:"g", why:"Corazón, cerebro, menos inflamación; ayuda a la testosterona.", tip:"Sardinas en lata 2 veces por semana es lo más barato. La chía y la linaza aportan una forma que el cuerpo usa menos.",
+    foods:[["Salmón","100 g",2.2],["Linaza molida","1 cucharada",2.3],["Chía","1 cucharada",2.1],["Sardinas en lata","100 g",1.5],["Nueces","1 puñado (28 g)",2.5]]},
+  vitA:{n:"Vitamina A", u:"µg", why:"Vista, piel y defensas.", tip:"Zanahoria o ahuyama un par de veces por semana basta.",
+    foods:[["Hígado de res","85 g",6580],["Ahuyama","1 taza cocida",1140],["Espinaca","1 taza cocida",940],["Zanahoria","½ taza cocida",665],["Huevo","1 unidad",80]]},
+  vitC:{n:"Vitamina C", u:"mg", why:"Defensas, colágeno; ayuda a absorber el hierro.", tip:"Una guayaba al día ya cubre más que la meta.",
+    foods:[["Guayaba","1 unidad",125],["Pimentón rojo","½ taza",95],["Fresas","1 taza",89],["Naranja","1 unidad",70],["Mango","1 taza",60],["Brócoli","½ taza cocido",50]]},
+  vitD:{n:"Vitamina D", u:"µg", why:"Huesos, músculo, defensas y testosterona.", tip:"La fuente principal es el sol: 15-20 minutos en brazos y cara. Con poco sol, pídele al médico un examen antes de tomar suplemento.",
+    foods:[["Salmón","100 g",11],["Sardinas en lata","100 g",4.8],["Leche fortificada","1 vaso",2.9],["Atún en lata","1 lata",1.7],["Huevo (la yema)","1 unidad",1.1]]},
+  vitE:{n:"Vitamina E", u:"mg", why:"Protege las células del daño (antioxidante).", tip:"Un puñado de almendras o semillas de girasol al día.",
+    foods:[["Semillas de girasol","28 g",7.4],["Almendras","28 g",7.3],["Aceite de girasol","1 cucharada",5.6],["Maní","28 g",2.4],["Aguacate","½ unidad",2.1]]},
+  vitK:{n:"Vitamina K", u:"µg", why:"Coagulación de la sangre y huesos.", tip:"Cualquier verdura de hoja verde en el almuerzo.",
+    foods:[["Espinaca","½ taza cocida",440],["Brócoli","½ taza cocido",110],["Lechuga","1 taza",60],["Repollo","1 taza crudo",53]]},
+  b6:{n:"Vitamina B6", u:"mg", why:"Usar la proteína, energía y sistema nervioso.", tip:"Con pollo, papa y banano en la semana se cubre fácil.",
+    foods:[["Garbanzos","1 taza cocida",1.1],["Pechuga de pollo","150 g",0.9],["Papa","1 mediana",0.6],["Banano","1 unidad",0.4]]},
+  b12:{n:"Vitamina B12", u:"µg", why:"Glóbulos rojos y energía. Solo está en alimentos de origen animal.", tip:"Si comes carne, huevo o leche a diario, casi siempre está cubierta.",
+    foods:[["Hígado de res","85 g",70],["Sardinas en lata","100 g",8.9],["Atún en lata","1 lata",2.5],["Carne de res","85 g",2.4],["Leche","1 vaso",1.2],["Huevo","1 unidad",0.5]]},
+  folate:{n:"Folato (B9)", u:"µg", why:"Formar células nuevas y glóbulos rojos.", tip:"Lentejas o fríjoles cubren casi todo el día.",
+    foods:[["Lentejas","1 taza cocida",358],["Fríjoles","1 taza cocida",290],["Hígado de res","85 g",215],["Espinaca","½ taza cocida",130],["Aguacate","½ unidad",80],["Naranja","1 unidad",40]]},
+  calcium:{n:"Calcio", u:"mg", why:"Huesos, dientes y contracción del músculo.", tip:"2-3 porciones de lácteos al día, o sardinas con espina.",
+    foods:[["Sardinas con espina","100 g",380],["Leche","1 vaso",300],["Queso campesino","50 g",280],["Yogur griego","200 g",220],["Brócoli","1 taza cocido",60]]},
+  iron:{n:"Hierro", u:"mg", why:"Lleva el oxígeno en la sangre. Si falta: cansancio.", tip:"Cómelo con vitamina C (limón, guayaba) y sin café ni té en esa comida: se absorbe mucho mejor.",
+    foods:[["Lentejas","1 taza cocida",6.6],["Hígado de res","85 g",5.2],["Carne de res","150 g",3.7],["Fríjoles","1 taza cocida",3.6],["Espinaca","½ taza cocida",3.2]]},
+  mag:{n:"Magnesio", u:"mg", why:"Músculo, sueño, energía y testosterona.", tip:"Un puñado de semillas o almendras y fríjoles en la semana.",
+    foods:[["Semillas de calabaza","28 g",156],["Fríjoles","1 taza cocida",120],["Almendras","28 g",80],["Espinaca","½ taza cocida",78],["Chocolate 70%","28 g",65],["Avena","40 g",55]]},
+  zinc:{n:"Zinc", u:"mg", why:"Testosterona, defensas y cicatrización.", tip:"Carne de res 3-4 veces por semana; si no comes carne, semillas de calabaza y garbanzos.",
+    foods:[["Carne de res","150 g",9],["Hígado de res","85 g",4.4],["Garbanzos","1 taza cocida",2.5],["Semillas de calabaza","28 g",2.2],["Fríjoles","1 taza cocida",1.9],["Pechuga de pollo","150 g",1.5]]},
+  potassium:{n:"Potasio", u:"mg", why:"Presión arterial, músculo y corazón.", tip:"Papa con cáscara, banano, aguacate y fríjoles. El agua de coco ayuda después de entrenar.",
+    foods:[["Papa con cáscara","1 mediana",925],["Plátano maduro","1 taza cocido",715],["Fríjoles","1 taza cocida",610],["Agua de coco","1 vaso",600],["Aguacate","½ unidad",485],["Banano","1 unidad",420]]},
+  selenium:{n:"Selenio", u:"µg", why:"Tiroides, defensas y protege los espermatozoides.", tip:"1 nuez de Brasil al día cubre todo. No más de 2: en exceso es tóxico.",
+    foods:[["Nuez de Brasil","1 unidad",70],["Atún en lata","1 lata",68],["Sardinas en lata","100 g",52],["Pechuga de pollo","150 g",39],["Huevo","1 unidad",15]]},
+};
+const LIMITS = {
+  sodium:{n:"Sodio", u:"mg", why:"Límite máximo: en exceso sube la presión.", tip:"Lo que más suma: embutidos, cubos de caldo, salsas, paquetes y comida rápida.", foods:[["Salchicha","1 unidad",500],["Cubo de caldo","1 unidad",900],["Paquete de papas","45 g",220]]},
+  sugar:{n:"Azúcar", u:"g", why:"Límite máximo de azúcar: en exceso, grasa y energía en montaña rusa.", tip:"Cambia gaseosa y jugo de caja por agua o fruta entera.", foods:[["Gaseosa","350 ml",39],["Jugo de caja","300 ml",30],["Ponqué","1 porción",25]]},
+};
+const nutName = k => GUIDE[k]?.n || LIMITS[k]?.n || k;
+function renderGuide(t, tot){
+  // macros: cómo repartir el día según el modo
+  const M = mode(), p = profile();
+  $("macroGuide").innerHTML = t ? `<div class="mguide">
+      <div><b>${t.prot} g</b><span>Proteína · ${MODES[p.goal]?.prot || 1.8} g por kg</span><p>${Math.max(3, +p.mealsN || 4)} comidas de ~${Math.round(t.prot/Math.max(3, +p.mealsN || 4))} g. Carne, pollo, huevo, atún, lácteos, fríjol.</p></div>
+      <div><b>${t.carb} g</b><span>Carbohidratos · el combustible</span><p>Más cerca del entreno (antes y después). Arroz, papa, avena, plátano, arepa, fruta.</p></div>
+      <div><b>${t.fat} g</b><span>Grasas · 28% de tus calorías</span><p>No bajes de esto: las hormonas se hacen con grasa. Aguacate, huevo, maní, aceite de oliva.</p></div>
+    </div>
+    <p class="small" style="margin:0"><b>El plato fácil:</b> ½ verduras, ¼ proteína, ¼ carbohidrato${M.dir > 0 ? " (en superávit sube el carbohidrato a ⅓)" : M.dir < 0 ? " (en déficit sube las verduras y baja el carbohidrato)" : ""}. Agua: unos ${r1c((t.w || 70)*0.035)} litros al día, más si entrenas.</p>` : `<p class="small muted">Llena tus datos para ver tus metas de macros.</p>`;
+  const open = new Set([...document.querySelectorAll(".gitem[open]")].map(x => x.dataset.k));
+  $("guide").innerHTML = Object.entries({...GUIDE, ...LIMITS}).map(([k,g]) => {
+    const goal = t?.[k], have = tot[k] || 0, lim = !!LIMITS[k], f = goal ? have/goal : 0;
+    return `<details class="gitem" data-k="${k}" ${open.has(k) ? "open" : ""}><summary><span><b>${g.n}</b><small>${goal ? (lim ? "máx. " : "meta ") + goal + " " + g.u : ""}</small></span>
+        <span class="${goal ? (lim ? (f > 1 ? "bad" : "ok") : f >= 1 ? "ok" : f >= 0.6 ? "warn" : "muted") : "muted"}">${r1(have)} ${g.u}</span></summary>
+      <p>${g.why}</p>
+      <ul class="flist">${g.foods.map(([n, por, a]) => `<li><span>${n} <small>${por}</small></span><b>${a} ${g.u}</b>${goal && !lim ? `<i style="width:${Math.min(100, a/goal*100)}%"></i>` : ""}</li>`).join("")}</ul>
+      <p class="small"><b>Cómo llegar:</b> ${g.tip}</p></details>`;
+  }).join("");
+}
+// lo que más falta hoy (menos del 70% de la meta) y el alimento que más lo completa con menos porciones
+function renderGaps(d, t, tot){
+  const el = $("gapCard");
+  if (!t || !d.meals.length) { el.innerHTML = `<h3>Te falta hoy</h3><p class="small muted">Cuando anotes tus comidas te digo qué nutrientes te faltan y qué comer para completarlos.</p>`; return; }
+  const gaps = Object.keys(GUIDE).filter(k => t[k]).map(k => [k, (tot[k] || 0)/t[k]]).filter(x => x[1] < 0.7).sort((a,b) => a[1] - b[1]).slice(0, 5);
+  const over = Object.keys(LIMITS).filter(k => t[k] && tot[k] > t[k]);
+  el.innerHTML = `<div class="row between"><h3>Te falta hoy</h3><span class="small muted">${gaps.length ? gaps.length + " por completar" : "todo en orden"}</span></div>
+    ${gaps.length ? gaps.map(([k, f]) => { const g = GUIDE[k], miss = t[k] - (tot[k] || 0), best = g.foods.slice().sort((a,b) => b[2] - a[2]).slice(0, 2);
+      return `<div class="gap"><div class="top2"><b>${g.n}</b><span class="muted small">${Math.round(f*100)}% · faltan ${r1c(miss)} ${g.u}</span></div>
+        <div class="bar"><i style="width:${f*100}%;background:var(--horm)"></i></div>
+        <span class="small">→ ${k === "vitD" ? "☀️ 15-20 min de sol · " : ""}${best.map(([n, por, a]) => `${n} (${por}): ${a >= miss ? "lo cubre" : "+" + a + " " + g.u}`).join(" · ")}</span></div>`; }).join("")
+      : `<p class="small ok" style="margin:0">Vas bien en vitaminas y minerales hoy.</p>`}
+    ${over.length ? `<p class="small bad" style="margin:0">Te pasaste de: ${over.map(nutName).join(", ")}. ${over.map(k => LIMITS[k].tip).join(" ")}</p>` : ""}`;
+}
+
 /* ---------- siestas ---------- */
 const r1c = x => String(r1(x)).replace(".", ",");
 function renderNaps(d){
@@ -1871,7 +2004,7 @@ function renderPhases(d){
   const P = [["Profundo","deep","#5B5CE0"],["Ligero","light","#8B8CFF"],["REM","rem","#4CB8FF"],["Despierto","awake","#FF7A45"]].filter(x => s[x[1]]);
   const tot = P.reduce((a,x) => a + s[x[1]], 0) || 1;
   $("phases").innerHTML = `<div class="phase">${P.map(x => `<i style="width:${s[x[1]]/tot*100}%;background:${x[2]}"></i>`).join("")}</div>
-    <div class="row small" style="color:#C9CBFF;margin-top:6px;gap:12px">${P.map(x => `<span><i class="sw" style="background:${x[2]};display:inline-block;margin-right:4px"></i>${x[0]} ${Math.floor(s[x[1]]/60)}h${pad(s[x[1]]%60)}</span>`).join("")}${s.score ? `<span>Puntaje ${s.score}</span>` : ""}</div>`;
+    <div class="row small" style="color:var(--night-ink);margin-top:6px;gap:12px">${P.map(x => `<span><i class="sw" style="background:${x[2]};display:inline-block;margin-right:4px"></i>${x[0]} ${Math.floor(s[x[1]]/60)}h${pad(s[x[1]]%60)}</span>`).join("")}${s.score ? `<span>Puntaje ${s.score}</span>` : ""}</div>`;
 }
 $("sleepPhoto").addEventListener("change", async e => {
   const f = e.target.files?.[0]; e.target.value = ""; if (!f) return;
