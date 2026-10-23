@@ -269,6 +269,16 @@ button.tli{background:transparent;width:100%;text-align:left;font:inherit;color:
 .fitem{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
 .fitem:last-child{border-bottom:0}
 .fitem button{background:transparent;color:var(--muted);padding:4px 8px}
+.fitem2{display:grid;gap:6px;padding:12px 0;border-bottom:1px solid var(--line)}
+.fitem2:last-child{border-bottom:0}
+.fhead{display:flex;align-items:center;gap:8px}.fhead b{flex:1;min-width:0}
+.fhead button{background:transparent;color:var(--muted);padding:4px 8px}
+.frow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.gin{display:inline-flex;align-items:center;gap:4px;font-size:13px;color:var(--muted)}
+.gin input{width:76px;padding:6px 8px;font-size:15px;font-weight:700;text-align:right}
+.conf{font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.conf.hi{background:#11995A1A;color:var(--prot)}.conf.mid{background:#D08F001A;color:var(--horm)}.conf.lo{background:#E0434A1A;color:var(--bad)}
+.side{display:block;text-align:center;cursor:pointer;border-radius:12px;padding:11px 14px;font-weight:600;background:var(--surface2);border:1px dashed var(--line)}
 .donut{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
 .donut svg{width:120px;height:120px}
 .mbar{display:grid;gap:4px}
@@ -450,7 +460,7 @@ textarea{min-height:70px;resize:vertical}
         <input id="hint" placeholder="Escribe: 2 huevos y una arepa con queso">
         <button type="submit" class="btn-main" id="sayBtn" disabled>Calcular</button>
       </form>
-      <p class="note" id="camNote">O toca la cámara de abajo. Si escribes algo antes de la foto, se usa como detalle del plato.</p>
+      <p class="note" id="camNote">O toca la cámara de abajo. Si escribes algo antes de la foto, se usa como detalle del plato. Para más exactitud: el plato completo desde arriba, con un tenedor o tu mano al lado.</p>
     </div>
 
     <div class="card">
@@ -800,7 +810,8 @@ const store = {
 window.addEventListener("pagehide", () => { try { localStorage.setItem(KEY, JSON.stringify(cache)); } catch {} });
 
 /* ---------- Gemini: la clave vive solo en este celular ---------- */
-const MODELS = ["gemini-2.5-flash","gemini-flash-latest","gemini-flash-lite-latest"];
+// los Gemini 3.x miden porciones mejor y son gratis; si uno no existe o está saturado, sigue el otro
+const MODELS = ["gemini-3.6-flash","gemini-3.5-flash","gemini-2.5-flash","gemini-flash-latest","gemini-flash-lite-latest"];
 const ai = {
   key(){ try { return localStorage.getItem(KEY+"-gemini") || ""; } catch { return ""; } },
   async call(parts, json){
@@ -808,15 +819,17 @@ const ai = {
     if (!key) throw {code:"no_key"};
     if (!navigator.onLine) throw {code:"offline"};
     let last = {code:"upstream_error"};
-    // si un modelo está saturado (429/503), prueba el siguiente
+    // si un modelo está saturado (429/503), no existe (404) o tarda más de 45 s, prueba el siguiente
     for (const m of MODELS) {
       let r;
+      const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 45000);
       try {
         r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {
-          method:"POST", headers:{"Content-Type":"application/json","x-goog-api-key":key},
-          body: JSON.stringify({contents:[{parts}], generationConfig: json ? {responseMimeType:"application/json"} : {}})
+          method:"POST", headers:{"Content-Type":"application/json","x-goog-api-key":key}, signal: ctl.signal,
+          body: JSON.stringify({contents:[{parts}], generationConfig: json ? {responseMimeType:"application/json", temperature:0.2} : {}})
         });
-      } catch { last = {code:"offline"}; continue; }
+      } catch (e) { clearTimeout(timer); last = {code: e?.name === "AbortError" ? "slow" : "offline"}; continue; }
+      clearTimeout(timer);
       if (r.status === 400 || r.status === 401 || r.status === 403) {
         const t = await r.text(); throw {code: /API.key|PERMISSION|API_KEY/i.test(t) ? "bad_key" : "upstream_error"};
       }
@@ -829,7 +842,8 @@ const ai = {
     }
     throw last;
   },
-  json(prompt, image){ return image ? imagePart(image).then(p => this.call([{text:prompt}, p], true)) : this.call([{text:prompt}], true); },
+  // image puede ser una foto o varias (la del plato y la de lado)
+  async json(prompt, image){ const imgs = image ? [].concat(image) : []; return this.call([{text:prompt}, ...await Promise.all(imgs.map(imagePart))], true); },
   text(prompt){ return this.call([{text:prompt}], false); }
 };
 // achica la foto a 1280 px para que suba rápido con datos móviles
@@ -838,7 +852,7 @@ async function imagePart(file){
   const s = Math.min(1, 1280 / Math.max(bmp.width, bmp.height));
   const c = document.createElement("canvas"); c.width = Math.round(bmp.width*s); c.height = Math.round(bmp.height*s);
   c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
-  const b64 = c.toDataURL("image/jpeg", 0.82).split(",")[1];
+  const b64 = c.toDataURL("image/jpeg", 0.88).split(",")[1];
   return {inline_data:{mime_type:"image/jpeg", data:b64}};
 }
 const setStatus = (t, ok) => { $("status").textContent = t; $("statusDot").classList.toggle("on", !!ok); };
@@ -1209,54 +1223,109 @@ document.addEventListener("click", e => { const g = e.target.closest("[data-goto
 const ERR = {no_key:"Falta tu clave de Gemini. Ve al ícono de persona → Ajustes y pégala.",
   bad_key:"La clave de Gemini no sirve. Revísala en Ajustes.", offline:"No hay internet. Agrega la comida a mano o intenta cuando tengas señal.",
   rate_limited:"Gemini está ocupado o llegaste al límite gratis de hoy. Intenta en un rato o agrega la comida a mano.",
-  invalid_json:"Gemini no devolvió un resultado claro. Intenta otra vez, más cerca del plato.", empty:"Gemini no respondió nada. Intenta otra vez."};
+  invalid_json:"Gemini no devolvió un resultado claro. Intenta otra vez, más cerca del plato.", empty:"Gemini no respondió nada. Intenta otra vez.", slow:"Gemini está muy lento ahora. Intenta en un rato."};
 const errMsg = e => ERR[e?.code] || "No se pudo calcular. Intenta de nuevo.";
 const FOOD_JSON = `Responde SOLO un JSON con esta forma:
-{"items":[{"name":"Arroz blanco","grams":150,"kcal":195,"prot":4,"carb":43,"fat":0.4,"fiber":0.6,"sugar":0.1,"vitA":0,"vitC":0,"vitD":0,"b12":0,"folate":5,"calcium":15,"iron":0.3,"mag":18,"zinc":0.7,"potassium":55,"sodium":2,"omega3":0,"vitE":0.1,"vitK":0,"b6":0.2,"selenium":11}],"note":"una frase corta y útil"}
-Unidades: kcal; gramos para prot, carb, fat, fiber, sugar y omega3; miligramos para vitC, vitE, b6, calcium, iron, mag, zinc, potassium y sodium; microgramos para vitA (RAE), vitD, vitK, b12, folate y selenium. Usa valores de tablas de composición (USDA o ICBF Colombia). Cuenta el aceite de fritura y la sal si aplica. Nombres en español.`;
-let found = null, foundUrl = "";
+{"scale":"qué usaste de referencia para medir","items":[{"name":"Arroz blanco cocido","grams":150,"low":120,"high":180,"portion":"1 taza rasa","how":"ocupa 1/4 del plato de 26 cm, unos 3 cm de alto","conf":0.7,"kcal":195,"prot":4,"carb":43,"fat":0.4,"fiber":0.6,"sugar":0.1,"vitA":0,"vitC":0,"vitD":0,"b12":0,"folate":5,"calcium":15,"iron":0.3,"mag":18,"zinc":0.7,"potassium":55,"sodium":2,"omega3":0,"vitE":0.1,"vitK":0,"b6":0.2,"selenium":11}],"note":"una frase corta y útil","tip":"qué foto o dato haría el cálculo más exacto, o vacío"}
+"grams" es tu mejor estimación; "low" y "high", el rango honesto. "portion" en medida casera (taza, cucharada, unidad, palma). "conf" va de 0 a 1.
+Unidades: kcal; gramos para prot, carb, fat, fiber, sugar y omega3; miligramos para vitC, vitE, b6, calcium, iron, mag, zinc, potassium y sodium; microgramos para vitA (RAE), vitD, vitK, b12, folate y selenium. Nutrientes de tablas de composición (USDA o ICBF Colombia) para el alimento tal como está preparado. Nombres en español.`;
+// el método paso a paso: escala con un objeto conocido, tamaño en cm → volumen → gramos, grasa escondida
+const photoPrompt = (text, n) => `Eres nutricionista clínico en Colombia (Bucaramanga), experto en calcular porciones mirando fotos. Trabaja despacio y con cuidado, paso a paso:
+1. ESCALA. Busca un objeto de tamaño conocido y úsalo como regla: plato llano ≈ 26 cm de diámetro, plato pando o de postre ≈ 20 cm, plato hondo ≈ 20 cm por 5 cm de hondo, tenedor ≈ 19 cm, cuchara sopera ≈ 17 cm, cucharita ≈ 13 cm, vaso ≈ 7-8 cm de ancho, pocillo ≈ 240 ml, mano adulta ≈ 18 cm, tarjeta ≈ 8,6 cm, lata ≈ 6,6 cm. Si no hay nada, supón un plato llano y baja la confianza.
+2. TAMAÑO. Por cada alimento mide con esa regla el largo, el ancho y el alto en cm, saca el volumen y pásalo a gramos con la densidad del alimento ya preparado (arroz cocido ≈ 0,8 g/cm³ servido; fríjoles con caldo ≈ 1; carne ≈ 1,05; papa o yuca ≈ 0,75; ensalada ≈ 0,3). Si son unidades (huevo, arepa, empanada, chorizo), cuéntalas y usa el peso típico por tamaño.
+3. PREPARACIÓN. Mira si está frito, apanado, asado, guisado o cocido. Suma la grasa que no se ve: el aceite que absorbe lo frito (5-15 % del peso), la mantequilla, el hogao, las salsas, el aderezo, el queso rallado y el azúcar de las bebidas. Si hay salsa o aceite a la vista, ponlo como un ítem aparte.
+4. COMIDA COLOMBIANA. Reconoce arepa (de maíz, de queso, boyacense, de choclo), patacón, maduro, yuca, chicharrón, chorizo, morcilla, carne en polvo, sobrebarriga, fríjoles, lentejas, sancocho, ajiaco, changua, tamal, empanada, buñuelo, pandebono, almojábana, aguapanela, jugo en agua o en leche.
+5. LO QUE NO SE VE. Si algo está tapado (arroz debajo de la carne) o el recipiente es hondo, ajusta la cantidad y baja la confianza.
+6. NUTRIENTES. Calcúlalos con los gramos finales. No redondees a números bonitos: da tu mejor estimación y un rango honesto.
+${n > 1 ? "Hay " + n + " fotos del MISMO plato: la primera desde arriba y las otras de lado; usa las de lado para medir el alto. No cuentes dos veces la misma comida.\n" : ""}${text ? "Detalle o corrección de la persona (manda sobre lo que ves): " + text + "\n" : ""}${FOOD_JSON}
+Si la foto no es comida, devuelve "items":[] y explica en "note".`;
+let found = null, foundUrl = "", foundFiles = [], foundText = "", foundFixes = [], foundMeta = {};
+// el detalle original + todas las correcciones + lo último que calculó Gemini
+const fixText = () => [foundText, found?.length ? "Antes calculaste: " + found.map(i => `${i.name} ${Math.round(i.grams)} g`).join(", ") : "", ...foundFixes.map(f => "Corrección: " + f)].filter(Boolean).join(". ");
 
-async function analyze(file, text){
+// again = recalcular el mismo plato (corrección o foto de lado) sin perder lo que ya dijo la persona
+async function analyze(file, text, again){
+  if (!again) { foundText = text || ""; foundFixes = []; }
   if (!file && !text) return;
   show("comida");
-  foundUrl = file ? URL.createObjectURL(file) : "";
+  foundFiles = file ? [].concat(file) : [];
+  foundUrl = foundFiles.length ? URL.createObjectURL(foundFiles[0]) : "";
   const box = $("analysis");
   box.hidden = false;
-  box.innerHTML = `<div class="found">${foundUrl ? `<img class="ph" src="${foundUrl}" alt="Foto de la comida">` : ""}<div class="muted">${foundUrl ? "Gemini está mirando el plato…" : "Gemini está calculando…"} unos 10 a 30 segundos.</div></div>`;
-  const prompt = file
-    ? `Eres nutricionista en Colombia (Bucaramanga). Mira la foto del plato de comida. Identifica cada alimento, calcula la porción en gramos según lo que se ve y sus nutrientes.
-${text ? "Detalle que da la persona: " + text + "\n" : ""}${FOOD_JSON} Si la foto no es comida, devuelve "items":[] y explica en "note".`
-    : `Eres nutricionista en Colombia (Bucaramanga). La persona escribió lo que comió: "${text}". Separa cada alimento, usa porciones típicas colombianas si no dice la cantidad, y calcula sus nutrientes.
+  box.innerHTML = `<div class="found">${foundUrl ? `<img class="ph" src="${foundUrl}" alt="Foto de la comida">` : ""}<div class="muted">${foundUrl ? `Gemini está midiendo el plato${foundFiles.length > 1 ? " con " + foundFiles.length + " fotos" : ""}…` : "Gemini está calculando…"} unos 10 a 40 segundos.</div></div>`;
+  const prompt = foundFiles.length
+    ? photoPrompt(text, foundFiles.length)
+    : `Eres nutricionista en Colombia (Bucaramanga). La persona escribió lo que comió: "${text}". Separa cada alimento, usa porciones típicas colombianas si no dice la cantidad, suma el aceite o la mantequilla de la preparación, y calcula sus nutrientes.
 ${FOOD_JSON} Si no es comida, devuelve "items":[] y explica en "note".`;
   try {
-    const res = await ai.json(prompt, file);
+    const res = await ai.json(prompt, foundFiles.length ? foundFiles : null);
     const items = Array.isArray(res?.items) ? res.items.filter(i => i && i.name) : [];
-    found = items.map(i => ({name:String(i.name).slice(0,60), grams:+i.grams||0, ...Object.fromEntries(NKEYS.map(k => [k, Math.max(0, +i[k]||0)])), src:file ? "foto" : "texto"}));
-    showFound(res?.note ? String(res.note) : "");
+    found = items.map(i => {
+      const g = Math.max(0, +i.grams || 0), nut = Object.fromEntries(NKEYS.map(k => [k, Math.max(0, +i[k]||0)]));
+      return {name:String(i.name).slice(0,60), grams:g, ...nut, src: foundFiles.length ? "foto" : "texto",
+        // base = lo que dijo Gemini; si cambias los gramos, todo se recalcula en proporción
+        base:{grams:g, ...nut}, low:+i.low || 0, high:+i.high || 0, portion:String(i.portion||"").slice(0,40),
+        how:String(i.how||"").slice(0,140), conf: Math.min(1, Math.max(0, +i.conf || 0))};
+    });
+    foundMeta = {note: String(res?.note||""), tip: String(res?.tip||""), scale: String(res?.scale||"")};
+    showFound();
   } catch (e) {
     box.innerHTML = `<div class="found">${foundUrl ? `<img class="ph" src="${foundUrl}" alt="Foto de la comida">` : ""}<div class="bad">${esc(errMsg(e))}</div></div>`;
   }
 }
-function showFound(note){
-  const box = $("analysis"), img = foundUrl ? `<img class="ph" src="${foundUrl}" alt="Foto de la comida">` : "";
+const confTag = c => !c ? "" : c >= .8 ? `<span class="conf hi">seguro</span>` : c >= .6 ? `<span class="conf mid">más o menos</span>` : `<span class="conf lo">dudoso</span>`;
+function setGrams(i, g){
+  i.grams = Math.max(0, g);
+  const k = i.base.grams ? i.grams / i.base.grams : 0;
+  NKEYS.forEach(n => i[n] = i.base[n] * k);
+}
+function showFound(){
+  const box = $("analysis"), img = foundUrl ? `<img class="ph" src="${foundUrl}" alt="Foto de la comida">` : "", {note, tip, scale} = foundMeta;
   if (!found.length) { box.innerHTML = `<div class="found">${img}<div>${esc(note || "No encontré comida.")}</div><button class="btn-ghost" id="dropFound">Cerrar</button></div>`; return; }
-  const sum = found.reduce((a,i) => ({kcal:a.kcal+i.kcal, prot:a.prot+i.prot}), {kcal:0,prot:0});
+  const sum = found.reduce((a,i) => {
+    const per = i.base.grams ? i.base.kcal / i.base.grams : 0, k = i.base.grams ? i.grams / i.base.grams : 1;
+    return {kcal:a.kcal+i.kcal, prot:a.prot+i.prot, lo:a.lo + per*(i.low ? i.low*k : i.grams), hi:a.hi + per*(i.high ? i.high*k : i.grams)};
+  }, {kcal:0, prot:0, lo:0, hi:0});
+  const range = sum.hi - sum.lo > 20 ? `<div class="small muted">entre ${fmt(sum.lo)} y ${fmt(sum.hi)} kcal</div>` : "";
   box.innerHTML = `<div class="found">${img}
-    <div class="row between"><span class="disp" style="font-size:26px">${fmt(sum.kcal)} <span class="muted" style="font-size:14px">kcal</span></span><span class="ok"><b>${r1(sum.prot)} g</b> proteína</span></div>
-    <div>${found.map((i,n) => `<div class="fitem"><span>${esc(i.name)} <span class="muted small">${i.grams ? fmt(i.grams)+" g" : ""}</span></span><span class="small"><b>${fmt(i.kcal)}</b> kcal</span><button data-drop="${n}" aria-label="Quitar ${esc(i.name)}">✕</button></div>`).join("")}</div>
-    ${note ? `<p class="note">${esc(note)}</p>` : ""}
-    <div class="grid2"><label class="field" style="grid-column:1/-1"><span class="label">Me comí</span><select id="portion"><option value="0.5">La mitad</option><option value="1" selected>Todo</option><option value="1.5">Una y media</option><option value="2">El doble</option></select></label>
+    ${foundFiles.length ? `<div class="small muted">📏 ${esc(scale || "Medido con el tamaño del plato")}</div>` : ""}
+    <div class="row between" style="align-items:flex-end"><div><span class="disp" id="fTot" style="font-size:26px">${fmt(sum.kcal)} <span class="muted" style="font-size:14px">kcal</span></span>${range}</div><span class="ok"><b>${r1(sum.prot)} g</b> proteína</span></div>
+    <div>${found.map((i,n) => `<div class="fitem2">
+      <div class="fhead"><b>${esc(i.name)}</b>${confTag(i.conf)}<button data-drop="${n}" aria-label="Quitar ${esc(i.name)}">✕</button></div>
+      <div class="frow"><label class="gin"><input type="number" inputmode="numeric" min="0" max="3000" step="5" value="${Math.round(i.grams)}" data-g="${n}" aria-label="Gramos de ${esc(i.name)}"> g</label>
+        <span class="small muted">${i.low && i.high ? fmt(i.low)+"–"+fmt(i.high)+" g" : ""}${i.portion ? " · "+esc(i.portion) : ""}</span>
+        <span class="small" style="margin-left:auto"><b data-k="${n}">${fmt(i.kcal)}</b> kcal</span></div>
+      ${i.how ? `<div class="small muted">${esc(i.how)}</div>` : ""}
+    </div>`).join("")}</div>
+    ${note ? `<p class="note keep">${esc(note)}</p>` : ""}
+    ${tip ? `<p class="note keep">💡 ${esc(tip)}</p>` : ""}
+    <p class="small muted">¿Un número no cuadra? Cambia los gramos arriba o dile qué corregir.</p>
+    <form class="row" id="fixForm" style="flex-wrap:nowrap"><input id="fixText" placeholder="Ej: el arroz era media taza, sin aceite"><button class="btn-ghost" type="submit">Recalcular</button></form>
+    ${foundFiles.length && foundFiles.length < 3 ? `<label class="btn-ghost side">📷 Agregar foto de lado (más exacto)<input type="file" id="sidePhoto" accept="image/*" capture="environment" hidden></label>` : ""}
+    <div class="grid2"><label class="field" style="grid-column:1/-1"><span class="label">Me comí</span><select id="portion"><option value="0.25">Un cuarto</option><option value="0.5">La mitad</option><option value="0.75">Tres cuartos</option><option value="1" selected>Todo</option><option value="1.5">Una y media</option><option value="2">El doble</option></select></label>
     <button class="btn-main" id="addFound">Agregar al día</button><button class="btn-ghost" id="dropFound">Descartar</button></div></div>`;
 }
 $("analysis").addEventListener("click", e => {
   const drop = e.target.closest("[data-drop]");
-  if (drop) { found.splice(+drop.dataset.drop,1); showFound(""); return; }
+  if (drop) { found.splice(+drop.dataset.drop,1); showFound(); return; }
   if (e.target.id === "addFound") {
     const k = +$("portion").value;
-    found.forEach(i => getDay().meals.push({...i, ...Object.fromEntries(NKEYS.map(n => [n, r1(i[n]*k)])), grams:Math.round(i.grams*k)}));
-    found = null; $("analysis").hidden = true; $("hint").value = ""; touchDay();
+    found.forEach(i => getDay().meals.push({name:i.name, src:i.src, ...Object.fromEntries(NKEYS.map(n => [n, r1(i[n]*k)])), grams:Math.round(i.grams*k)}));
+    found = null; foundFiles = []; $("analysis").hidden = true; $("hint").value = ""; touchDay();
   }
-  if (e.target.id === "dropFound") { found = null; $("analysis").hidden = true; }
+  if (e.target.id === "dropFound") { found = null; foundFiles = []; $("analysis").hidden = true; }
+});
+// cambiar los gramos recalcula ese alimento y el total sin volver a llamar a Gemini
+$("analysis").addEventListener("change", e => {
+  if (e.target.dataset?.g != null) { setGrams(found[+e.target.dataset.g], +e.target.value || 0); showFound(); }
+  if (e.target.id === "sidePhoto") { const f = e.target.files?.[0]; if (f) analyze([...foundFiles, f], fixText(), true); }
+});
+$("analysis").addEventListener("submit", e => {
+  if (e.target.id !== "fixForm") return;
+  e.preventDefault();
+  const fix = $("fixText").value.trim(); if (!fix) return;
+  foundFixes.push(fix);
+  analyze(foundFiles.length ? foundFiles : null, fixText(), true);
 });
 $("photo").addEventListener("change", e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) analyze(f, $("hint").value.trim()); });
 $("sayForm").onsubmit = e => { e.preventDefault(); const t = $("hint").value.trim(); if (t) analyze(null, t); };
