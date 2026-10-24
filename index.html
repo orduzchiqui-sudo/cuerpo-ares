@@ -219,6 +219,8 @@ button.tli{background:transparent;width:100%;text-align:left;font:inherit;color:
 .rt .nm span{font-size:12px;color:var(--muted)}
 .rt .acts{display:flex;gap:6px}
 .rt .acts button{padding:7px 10px;font-size:13px}
+.rt.sug{background:rgba(238,98,50,.05);border-radius:14px;padding:10px 12px;border-top-color:transparent;box-shadow:inset 0 0 0 1.5px rgba(238,98,50,.35)}
+.rt .nm .sugtag{display:inline-block;font-size:11px;font-weight:700;color:var(--kcal);background:rgba(238,98,50,.12);padding:2px 8px;border-radius:99px;margin-bottom:4px}
 .wex{background:var(--surface2);border-radius:14px;padding:12px;display:grid;gap:8px}
 .wex .last{font-size:12px;color:var(--muted)}
 .wset{display:grid;grid-template-columns:28px 1fr 1fr 40px;gap:8px;align-items:center}
@@ -301,6 +303,16 @@ details summary::-webkit-details-marker{display:none}
 details summary::after{content:" +";color:var(--muted)}
 details[open] summary::after{content:" −"}
 .nut{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px 18px}
+.nsum{display:flex;gap:16px;align-items:center}.nsum>div{display:grid;gap:4px;min-width:0}.nsum b{font-family:var(--f-display);font-size:19px}
+.nchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.nchip{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.nchip.ok{background:rgba(17,153,90,.1);color:var(--prot)}.nchip.mid{background:rgba(208,143,0,.12);color:var(--horm)}.nchip.low{background:rgba(238,98,50,.1);color:var(--kcal)}.nchip.over{background:rgba(224,67,74,.1);color:var(--bad);white-space:normal}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);background:var(--surface2);border-radius:12px;padding:4px;gap:4px}
+.seg button{background:transparent;padding:8px 6px;font-size:13px;color:var(--muted)}
+.seg button[aria-selected=true]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(16,24,40,.12)}
+.ngrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:8px}
+.ntile{display:grid;justify-items:center;gap:4px;padding:12px 6px;background:var(--surface2);border-radius:16px;text-align:center}
+.ntile b{font-size:12.5px;line-height:1.2}.ntile span{font-size:11px;color:var(--muted);line-height:1.25}
 .empty{padding:16px;border:1.5px dashed var(--line);border-radius:14px;color:var(--muted);font-size:14px;text-align:center}
 .tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:2px 7px;border-radius:99px;background:var(--surface2);color:var(--sleep);margin-left:6px;vertical-align:1px}
 
@@ -491,7 +503,7 @@ textarea{min-height:70px;resize:vertical}
 
     <div class="card">
       <div class="row between"><h3>Vitaminas y minerales</h3><span class="small" id="nutrScore"></span></div>
-      <div id="nutr" style="display:grid;gap:18px"></div>
+      <div id="nutr" style="display:grid;gap:14px"></div>
       <p class="note">Zinc, magnesio, vitamina D y omega-3 son los que más pesan en la testosterona. La foto y el texto traen todos los nutrientes; las porciones rápidas solo algunos.</p>
     </div>
 
@@ -1061,13 +1073,7 @@ function render(){
     `<div class="meal"><div class="ic">${esc(m.name.trim()[0]?.toUpperCase() || "·")}</div><div class="nm">${esc(m.name)}${m.src ? `<span class="tag">${m.src}</span>` : ""}<div class="sub">${m.prot ? r1(m.prot)+" g proteína" : ""}${m.grams ? " · "+fmt(m.grams)+" g" : ""}</div></div><span class="kc">${fmt(m.kcal)}</span><button data-del="${i}" aria-label="Borrar ${esc(m.name)}">✕</button></div>`).join("")
     : `<div class="empty">Nada registrado este día.<br>Toca la cámara de abajo o escribe lo que comiste.</div>`;
 
-  $("nutr").innerHTML = NGROUPS.map(([g, color, list]) => `<div style="display:grid;gap:10px"><div class="label">${g}</div><div class="nut">${list.map(([n,k,u,limit]) => {
-    const v = tot[k], goal = t?.[k], f = goal ? v/goal : 0;
-    const col = !goal ? color : limit ? (f > 1 ? "var(--bad)" : color) : f >= 1 ? "var(--prot)" : color;
-    return `<div class="mbar"><div class="top2"><span>${n}${limit ? ' <span class="muted small">máx.</span>' : ""}</span><span class="${limit && f > 1 ? "bad" : f >= 1 && !limit ? "ok" : "muted"}">${r1(v)}${goal ? " / "+goal : ""} ${u}</span></div><div class="bar"><i style="width:${Math.min(100,f*100)}%;background:${col}"></i></div></div>`;
-  }).join("")}</div></div>`).join("");
-  const filled = NGROUPS.flatMap(g => g[2]).filter(x => !x[3] && t?.[x[1]]);
-  $("nutrScore").innerHTML = t ? `<b class="ok">${filled.filter(x => tot[x[1]] >= t[x[1]]).length}</b><span class="muted"> de ${filled.length} cubiertos</span>` : "";
+  renderNutr(t, tot);
 
   // SUEÑO
   setVal("bed", d.bed); setVal("wake", d.wake);
@@ -1218,6 +1224,37 @@ function playRings(){
 document.querySelectorAll(".tab").forEach(b => b.onclick = () => show(b.dataset.tab));
 $("toYo").onclick = () => show("yo");
 document.addEventListener("click", e => { const g = e.target.closest("[data-goto]"); if (g) show(g.dataset.goto); });
+
+/* ---------- vitaminas y minerales: resumen + fichas con anillo, por pestañas ---------- */
+let nutTab = (() => { try { const v = localStorage.getItem("cuerpo-ares-nutab"); return v == null ? 1 : +v; } catch { return 1; } })();
+// estado de cada nutriente: completo, a medias, bajo; en los límites (azúcar, sodio) solo importa pasarse
+const nutState = (f, limit) => limit ? (f > 1 ? "over" : "ok") : f >= 1 ? "ok" : f >= .5 ? "mid" : "low";
+const NCOL = {ok:"var(--prot)", mid:"var(--horm)", low:"var(--kcal)", over:"var(--bad)"};
+const miniRing = (f, col, size, txt) => { const R = size/2 - 4, C = 2*Math.PI*R, off = C*(1 - Math.min(1, f));
+  return `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" aria-hidden="true"><circle cx="${size/2}" cy="${size/2}" r="${R}" fill="none" stroke="var(--line)" stroke-width="5"/><circle cx="${size/2}" cy="${size/2}" r="${R}" fill="none" stroke="${col}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)} ${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 ${size/2} ${size/2})"/><text x="50%" y="50%" dy=".35em" text-anchor="middle" font-size="${size > 60 ? 17 : 11.5}" font-weight="700" fill="var(--ink)" font-family="Sora,sans-serif">${txt}</text></svg>`; };
+function renderNutr(t, tot){
+  const all = NGROUPS.flatMap(g => g[2]).filter(x => t?.[x[1]]);
+  const st = all.map(([n,k,u,lim]) => nutState(tot[k]/t[k], lim)), need = all.filter(x => !x[3]);
+  const avg = need.length ? need.reduce((a,x) => a + Math.min(1, tot[x[1]]/t[x[1]]), 0)/need.length : 0;
+  const cnt = s => st.filter(x => x === s).length, over = all.filter((x,i) => st[i] === "over").map(x => x[0]);
+  const sum = t ? `<div class="nsum">${miniRing(avg, avg >= .8 ? NCOL.ok : avg >= .5 ? NCOL.mid : NCOL.low, 78, Math.round(avg*100) + "%")}
+    <div><b>${avg >= .8 ? "¡Casi completo!" : avg >= .5 ? "Vas bien" : "Te falta bastante"}</b><span class="small muted">Cubres el ${Math.round(avg*100)} % de tus vitaminas y minerales de hoy</span>
+    <div class="nchips"><span class="nchip ok">✓ ${((n) => n + (n === 1 ? " completo" : " completos"))(cnt("ok") - (all.length - need.length - over.length))}</span><span class="nchip mid">◐ ${cnt("mid")} a medias</span><span class="nchip low">○ ${cnt("low")} ${cnt("low") === 1 ? "bajo" : "bajos"}</span>${over.length ? `<span class="nchip over">↑ te pasaste: ${over.join(", ").toLowerCase()}</span>` : ""}</div></div></div>` : "";
+  const G = NGROUPS[nutTab] || NGROUPS[0];
+  $("nutr").innerHTML = sum + `<div class="seg" role="tablist">${[1,2,0].map(i => `<button role="tab" data-nt="${i}" aria-selected="${i === nutTab}">${i ? NGROUPS[i][0] : "Otros"}</button>`).join("")}</div>
+    <div class="ngrid">${G[2].map(([n,k,u,lim]) => { const goal = t?.[k], v = tot[k] || 0, f = goal ? v/goal : 0, s2 = goal ? nutState(f, lim) : "low";
+      return `<button class="ntile" data-nk="${k}">${miniRing(f, NCOL[s2], 50, goal ? Math.round(f*100) + "%" : "—")}<b>${n}</b><span>${r1c(v)}${goal ? " de " + r1c(goal) : ""} ${u}${lim ? " máx." : ""}</span></button>`; }).join("")}</div>`;
+  $("nutrScore").innerHTML = "";
+}
+$("nutr").addEventListener("click", e => {
+  const tb = e.target.closest("[data-nt]");
+  if (tb) { nutTab = +tb.dataset.nt; try { localStorage.setItem("cuerpo-ares-nutab", nutTab); } catch {} renderNutr(targets(cur), totals(day(cur) || blankDay())); return; }
+  const tl = e.target.closest("[data-nk]"); if (!tl) return;
+  // abre la ficha de la guía con los alimentos que lo traen
+  const g = document.querySelector(`.gitem[data-k="${tl.dataset.nk}"]`);
+  if (g && g.offsetParent) { g.open = true; g.scrollIntoView({behavior:"smooth", block:"center"}); }
+  else { const x = GUIDE[tl.dataset.nk] || LIMITS[tl.dataset.nk]; if (x) toast(x.why); }
+});
 
 /* ---------- foto o texto de comida → Gemini calcula ---------- */
 const ERR = {no_key:"Falta tu clave de Gemini. Ve al ícono de persona → Ajustes y pégala.",
@@ -1449,34 +1486,40 @@ $("lDate").value = cur;
 
 /* ---------- plan de hoy: lo que falta, de un toque ---------- */
 // set: marca la tarea desde aquí; go: lleva a la pantalla donde se anota
-function planTasks(d){
+// "Entrenar" solo sale en tus días de entreno; un día de descanso no cuenta como falla (si igual entrenas, suma)
+function planTasks(d, id = cur){
   d = {...blankDay(), ...d};
-  const sh = sleepHours(d);
+  const sh = sleepHours(d), p = profile(), plan = p.trainDays || [], moved = actsOf(d).length > 0;
+  const trainDay = !plan.length || plan.includes(parse(id).getDay());
+  const train = p.exercise === "no" ? {k:"train", t:"Moverte 20-30 minutos", s:"Caminar, bailar o subir escaleras", done: moved, go:"cuerpo"}
+    : trainDay ? {k:"train", t:"Entrenar", s: d.exType ? EXTYPES.find(e => e[0] === d.exType)?.[1] : "Pesas, fútbol, cardio o descanso", done: !!d.exType, go:"cuerpo"}
+    : moved ? {k:"train", t:"Entrenaste en tu día libre", s:"Puntos extra", done: true, go:"cuerpo"} : null;
   return [
     {k:"sleep", t:"Anotar cómo dormiste", s:"Hora de acostarte y levantarte", done: sh != null, go:"sueno"},
     {k:"food", t:"Registrar tus comidas", s:`${d.meals.length} de 3 · tómale foto al plato`, done: d.meals.length >= 3, go:"foto"},
     {k:"sun", t:"15 minutos de sol en la mañana", s:"Testosterona, cortisol y melatonina", done: (d.sun||0) >= 15, set: x => x.sun = (x.sun||0) >= 15 ? null : 15},
-    {k:"train", t:"Entrenar", s: d.exType ? EXTYPES.find(e => e[0] === d.exType)?.[1] : "Pesas, fútbol, cardio o descanso", done: !!d.exType, go:"cuerpo"},
+    train,
     {k:"steps", t:"Caminar 7.000 pasos", s:"Mira los pasos en tu cel y anótalos", done: (d.steps||0) >= 7000, go:"cuerpo"},
     {k:"water", t:"Tomar 8 vasos de agua", s:`${d.water} de 8 · toca para sumar uno`, done: d.water >= 8, set: x => x.water = x.water >= 8 ? 0 : x.water + 1},
     {k:"caf", t:"Nada de café después de las 2 p.m.", s:"Cortisol y melatonina", done: d.lateCaffeine === false, set: x => x.lateCaffeine = x.lateCaffeine === false ? null : false},
     {k:"scr", t:"Sin pantallas 1 h antes de dormir", s:"Más melatonina y sueño profundo", done: d.screensOff === true, set: x => x.screensOff = !x.screensOff},
     {k:"mood", t:"Anotar energía, ánimo y ansiedad", s:"Un toque del 1 al 5", done: !!(d.energy && d.mood && d.anxiety), go:"cuerpo"},
     {k:"coach", t:"Pedir consejo al entrenador", s:"Al final del día", done: !!d.advice, go:"coach"},
-  ];
+  ].filter(Boolean);
 }
 // días seguidos cumpliendo una tarea; si hoy aún no, cuenta desde ayer para no "romper" la racha antes de tiempo
 function taskStreak(k){
   let s = cur, n = 0;
-  const done = id => planTasks(day(id) || blankDay()).find(t => t.k === k)?.done;
-  if (!done(s)) s = shift(s,-1);
-  while (done(s)) { n++; s = shift(s,-1); }
+  // un día sin esa tarea (descanso) se salta sin romper la racha
+  const task = id => planTasks(day(id) || blankDay(), id).find(t => t.k === k);
+  if (!task(s)?.done) s = shift(s,-1);
+  for (let skip = 0; skip < 7; ) { const t = task(s); if (!t) { skip++; s = shift(s,-1); continue; } if (!t.done) break; n++; skip = 0; s = shift(s,-1); }
   return n;
 }
 // 10 puntos por tarea cumplida, 50 extra por día perfecto; un nivel cada 500
 function xpTotal(){
   return Object.keys(cache).filter(k => k.startsWith("d-")).reduce((a,k) => {
-    const ts = planTasks(cache[k]), n = ts.filter(t => t.done).length;
+    const ts = planTasks(cache[k], k.slice(2)), n = ts.filter(t => t.done).length;
     return a + n*10 + (n === ts.length ? 50 : 0);
   }, 0);
 }
@@ -1637,7 +1680,7 @@ function schedule(id){
   }
   if (p.modules?.food !== false) slots.sort((a,b) => a.m - b.m).forEach((s,i) => add(s.m, "🍽️", s.n, d.meals.length > i, s.sub || "Toca para tomarle foto", "food"));
   add(14*60, "☕", "Último café del día", d.lateCaffeine === false, "Toca si no tomaste café después", "caf");
-  if (isTrain) { const r = nextRoutine(); add(trainAt, "💪", "Entrenar" + (r ? ": " + r.name.split(" (")[0] : ""), isStrength(d), `${sess} min · toca para empezar`, "train"); }
+  if (isTrain) { const r = nextRoutine(); add(trainAt, "💪", "Entrenar" + (r ? ": " + r.name.split(" (")[0] : ""), isStrength(d), `${sess} min · toca para elegir rutina`, "train"); }
   else add(17*60, "🚶", "Caminar 30 minutos", (d.steps || 0) >= mode().steps*0.8 || actsOf(d).some(a => a.type === "caminar"), noEx ? "Lo más importante para tu salud · toca al terminar" : "Descanso activo · toca al terminar", "walk");
   add(bed - 60, "📵", "Fuera pantallas", d.screensOff === true, "Toca cuando dejes el celular", "scr");
   add(bed, "🌙", "A dormir", !!day(shift(id, 1))?.bed, `${st} h de sueño · toca al acostarte`, "sleep");
@@ -1849,7 +1892,7 @@ $("dayCard").addEventListener("click", e => {
     if (has) d.acts = d.acts.filter(x => x.type !== "caminar"); else d.acts.push({type:"caminar", min:30, int:1});
     syncEx(d); touchDay(); if (!has) toast(`Caminata anotada · ${fmt(actKcal({type:"caminar", min:30, int:1}, lastWeight() || 70))} kcal 🚶`); return; }
   if (a === "food") { if (ai.key()) $("photo").click(); else show("comida"); return; }
-  if (a === "train") { const r = nextRoutine(); if (r && !d.workout) { d.workout = {rid:r.id, name:r.name, plan:structuredClone(r.ex), sets:{}, start:nowHHMM()}; store.save(); hrAutoStart(); } show("cuerpo"); renderWorkout(); return; }
+  if (a === "train") { goRoutines(); return; }
 });
 
 /* ---------- siestas ---------- */
@@ -1919,7 +1962,7 @@ function dayReport(id){
   const hs = t ? hormones(d, t, id) : [], weak = hs.slice().sort((a,b) => a.score - b.score)[0];
   if (weak && weak.score < 50 && !live) { const f = weak.f.filter(x => (x.val ?? 0) < 1).sort((a,b) => b.w - a.w)[0]; B("h-" + weak.n, `${weak.n} baja (${weak.score}%)`, f ? f.n + ": " + f.tip : "", 1); }
   // puntaje del día: promedio de lo que se anotó
-  const tasks = planTasks(d), steps = d.steps != null ? clamp(d.steps/M.steps) : null;
+  const tasks = planTasks(d, id), steps = d.steps != null ? clamp(d.steps/M.steps) : null;
   const C = {
     Comida: d.meals.length && t ? (clamp(1 - Math.abs(tot.kcal - t.kcal)/t.kcal/0.3) + clamp(tot.prot/t.prot))/2 : null,
     Sueño: ds == null ? null : clamp(ds/st),
@@ -2080,7 +2123,7 @@ function renderTodo(d, t, tot){
     train = `Hoy no es día de pesas. Descanso activo: camina hasta ${fmt(M.steps)} pasos${cardioN < M.cardio ? " o haz 20-30 minutos de cardio suave" : ""}. Próximo entreno: <b>${nx ? (nx.days === 1 ? "mañana" : DOWL[nx.dow]) : "—"} a las ${toHHMM(toMin(p.trainTime || "18:00"))}</b>.`; }
   else if (plan || gymN < gymTarget) { const r = nextRoutine();
     train = `Hoy toca pesas${r ? ": <b>" + esc(r.name) + "</b>" : ""}${plan ? " a las <b>" + toHHMM(toMin(p.trainTime || "18:00")) + "</b>" : ""}, ${p.sessMin || 60} minutos. Llevas ${gymN} de ${gymTarget} días esta semana. Intenta subir 1 repetición o 2,5 kg frente a la vez pasada.`;
-    if (r) btn = `<button class="btn-main" data-start="${r.id}">Entrenar ${esc(r.name.split(" (")[0])}</button>`; }
+    if (r) btn = `<button class="btn-main" data-start="${r.id}">Ver rutinas</button>`; }
   else if (cardioN < M.cardio) train = `Hoy toca cardio: 25-35 minutos de trote, bici o un partido a ritmo moderado (unas ${fmt(actKcal({type:"correr", min:30, int:1}, t.w))} kcal). Llevas ${cardioN} de ${M.cardio} esta semana.`;
   else train = `Ya cumpliste la semana (${gymN} de pesas, ${cardioN} de cardio). Hoy camina o descansa.`;
   // COMIDA
@@ -2106,9 +2149,7 @@ function renderTodo(d, t, tot){
 }
 $("todo").addEventListener("click", e => {
   const b = e.target.closest("[data-start]"); if (!b) return;
-  const r = routines().items.find(x => x.id === b.dataset.start); if (!r) return;
-  getDay().workout = {rid:r.id, name:r.name, plan:structuredClone(r.ex), sets:{}, start:nowHHMM()}; store.save(); hrAutoStart();
-  show("cuerpo"); renderWorkout(); $("workout").scrollIntoView({behavior:"smooth"});
+  goRoutines();
 });
 
 /* ---------- sueño: un toque al acostarte y al despertar ---------- */
@@ -2181,10 +2222,12 @@ function ensureEssentials(){
   return n;
 }
 let editingRoutine = null;
+// lleva a Mis rutinas sin empezar nada: la rutina arranca solo cuando tocas Empezar
+function goRoutines(){ show("cuerpo"); renderRoutines(); setTimeout(() => $("routines").scrollIntoView({behavior:"smooth", block:"center"}), 120); }
 function renderRoutines(){
-  const R = routines().items;
-  $("routines").innerHTML = R.length ? R.map(r => `<div class="rt"><div class="nm"><b>${esc(r.name)}</b><span>${r.ex.map(x => esc(x[0])).join(" · ")}</span></div>
-    <div class="acts"><button class="btn-main" data-rgo="${r.id}">Entrenar</button><button class="btn-ghost" data-redit="${r.id}" aria-label="Editar ${esc(r.name)}">✎</button></div></div>`).join("")
+  const R = routines().items, w = day()?.workout, sug = profile().exercise === "no" || w ? null : nextRoutine()?.id;
+  $("routines").innerHTML = R.length ? R.map(r => `<div class="rt${r.id === sug ? " sug" : ""}"><div class="nm">${r.id === sug ? `<span class="sugtag">Sugerida hoy</span>` : ""}<b>${esc(r.name)}</b><span>${r.ex.map(x => esc(x[0])).join(" · ")}</span></div>
+    <div class="acts"><button class="btn-main" data-rgo="${r.id}">Empezar</button><button class="btn-ghost" data-redit="${r.id}" aria-label="Editar ${esc(r.name)}">✎</button></div></div>`).join("")
     : `<div class="empty">No tienes rutinas. Crea la tuya con "+ Nueva rutina".</div>`;
 }
 // el último entrenamiento antes de hoy donde aparece ese ejercicio
