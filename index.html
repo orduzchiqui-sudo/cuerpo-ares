@@ -73,14 +73,13 @@ input::placeholder,textarea::placeholder{color:var(--muted)}
 button{transition:transform .12s ease,background-color .2s,color .2s,box-shadow .2s}
 button:active{transform:scale(.96)}
 @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 4px rgba(238,98,50,.18)}50%{box-shadow:0 0 0 8px rgba(238,98,50,.06)}}
 @keyframes pop2{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
 .screen.enter>*{animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
 .screen.enter>*:nth-child(2){animation-delay:.04s}.screen.enter>*:nth-child(3){animation-delay:.08s}.screen.enter>*:nth-child(4){animation-delay:.12s}
 .screen.enter>*:nth-child(5){animation-delay:.16s}.screen.enter>*:nth-child(6){animation-delay:.2s}.screen.enter>*:nth-child(n+7){animation-delay:.24s}
 .tab[aria-current=page] svg{animation:pop2 .3s ease}
 .tab[aria-current=page]::after{content:"";width:18px;height:3px;border-radius:3px;background:var(--kcal);margin-top:2px}
-@media (prefers-reduced-motion:reduce){.screen.enter>*,.tab[aria-current=page] svg,.tli.now .ic{animation:none}button:active{transform:none}}
+@media (prefers-reduced-motion:reduce){.screen.enter>*,.tab[aria-current=page] svg,.screen.enter .bbar i{animation:none}button:active{transform:none}}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .between{justify-content:space-between}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -124,9 +123,30 @@ button:active{transform:scale(.96)}
 .modes::-webkit-scrollbar{display:none}
 .modes button{flex:none;padding:8px 12px;border-radius:99px;font-size:13px;background:var(--surface2)}
 .modes button[aria-pressed=true]{background:var(--ink);color:#fff}
-.bal{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:6px;align-items:center;text-align:center}
-.bal .v{font-size:19px;font-weight:800;display:block}
-.bal .op{color:var(--muted);font-weight:800}
+.baltop{display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
+.baltop .v{font-family:var(--f-display);font-size:30px;font-weight:700;line-height:1;white-space:nowrap}
+.baltop .w{display:block;text-align:right;font-size:12px;color:var(--muted);margin-top:4px}
+.brow{display:grid;gap:6px}
+.brow .top2{display:flex;justify-content:space-between;font-size:13px}
+.bbar{position:relative;display:flex;gap:2px;height:14px;border-radius:9px;background:var(--surface2)}
+.bbar i{display:block;height:100%;border-radius:9px;transform-origin:left}
+.bbar i.food{background:var(--kcal)}
+.bbar i.base{background:var(--ink)}
+.bbar i.ex{background:var(--prot)}
+.bbar i.st{background:var(--water)}
+.bbar u{position:absolute;top:-3px;bottom:-3px;width:3px;margin-left:-1px;border-radius:2px;background:var(--ink);text-decoration:none}
+.screen.enter .bbar i{animation:grow .7s cubic-bezier(.2,.8,.2,1) both}
+@keyframes grow{from{transform:scaleX(0)}to{transform:none}}
+.bleg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--muted)}
+.bleg span::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;background:var(--c)}
+.gblock{display:grid;gap:8px;padding-top:12px;border-top:1px solid var(--line)}
+.gblock p{margin:0;font-size:14px;line-height:1.5}
+.gblock .hd{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:800}
+.wdaysel{width:auto;padding:4px 8px;font-size:12px;font-weight:600;border-radius:9px}
+.wlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(68px,1fr));gap:6px}
+.wlist div{background:var(--surface2);border-radius:12px;padding:8px;display:grid;gap:1px;text-align:center;font-size:11px;color:var(--muted)}
+.wlist b{font-size:15px;color:var(--ink)}
+.wform{display:grid;grid-template-columns:1fr auto;gap:8px}
 .todo-b{display:grid;gap:6px;padding:12px 0;border-top:1px solid var(--line)}
 .todo-b:first-of-type{border-top:0;padding-top:0}
 .todo-b .hd{display:flex;align-items:center;gap:8px;font-weight:800}
@@ -137,17 +157,6 @@ button:active{transform:scale(.96)}
 .act span{font-size:12px;color:var(--muted)}
 .act button{background:transparent;color:var(--muted);padding:4px 8px}
 /* línea del día */
-.tl{display:grid;gap:0}
-.tli{display:grid;grid-template-columns:74px 26px 1fr;gap:8px;align-items:start;padding:7px 0;position:relative}
-.tli .tm{white-space:nowrap;font-size:12px;color:var(--muted);font-weight:700;padding-top:2px;text-align:right}
-.tli .ic{width:26px;height:26px;border-radius:50%;background:var(--surface2);display:grid;place-items:center;font-size:13px;position:relative;z-index:1}
-.tli:not(:last-child)::before{content:"";position:absolute;left:94px;top:30px;bottom:-6px;width:2px;background:var(--line)}
-.tli .tx b{display:block;font-size:14px}
-.tli .tx span{font-size:12px;color:var(--muted)}
-.tli.done .ic{background:var(--prot);color:#fff}
-.tli.done .tx b{color:var(--muted);text-decoration:line-through}
-.tli.now .ic{background:var(--kcal);color:#fff;box-shadow:0 0 0 4px rgba(238,98,50,.18);animation:pulse 1.8s ease-in-out infinite}
-.tli.now .tx b{color:var(--kcal)}
 /* plan de metas */
 .phases{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .ph{background:var(--surface2);border-radius:12px;padding:9px 10px;display:grid;gap:2px;font-size:12px;color:var(--muted)}
@@ -160,8 +169,6 @@ button:active{transform:scale(.96)}
 body.simple [data-adv], body.noex [data-ex], body.no-food [data-food], body.no-sleep [data-sleep], body.no-horm [data-horm], body.no-body [data-body]{display:none!important}
 body.simple .screen .note{display:none}
 body.simple .screen .card .note.keep{display:block}
-button.tli{background:transparent;width:100%;text-align:left;font:inherit;color:inherit;border-radius:12px;padding:7px 0}
-@media (hover:hover){button.tli:hover{background:var(--surface2)}}
 /* guía de nutrientes */
 .mguide{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 @media (max-width:440px){.mguide{grid-template-columns:1fr}}
@@ -418,7 +425,7 @@ textarea{min-height:70px;resize:vertical}
   <!-- HOY -->
   <main class="screen" id="s-hoy">
     <div class="card">
-      <div class="row between"><h2 id="hello">Tu día</h2><span class="small muted" id="dateLong"></span></div>
+      <div class="row between"><h2 id="hello">Hoy</h2><span class="small muted" id="dateLong"></span></div>
       <div class="rings">
         <svg viewBox="0 0 168 168" id="ringsSvg" role="img" aria-label="Anillos de calorías, proteína y sueño"></svg>
         <div class="legend" id="legend"></div>
@@ -430,11 +437,9 @@ textarea{min-height:70px;resize:vertical}
 
     <div class="card" id="repMini"></div>
 
-    <div class="card" id="dayCard"></div>
+    <div class="card" id="balCard"></div>
 
     <div class="card" id="goalCard"></div>
-
-    <div class="card coach" id="todo"></div>
 
     <div class="card">
       <div class="row between"><h3>Tu plan de hoy</h3><span class="small" id="planN"></span></div>
@@ -1027,7 +1032,7 @@ function render(){
   const name = (profile().name || "").trim().split(" ")[0], hr = new Date().getHours();
   $("hello").textContent = cur !== today ? "Ese día" : (hr < 12 ? "Buenos días" : hr < 19 ? "Buenas tardes" : "Buenas noches") + (name ? ", " + name : "");
   renderPlan(d, t);
-  renderGoal(t, tot); renderTodo(d, t, tot); renderDay(); renderHorario(); renderPlanCard(t); renderActs(d, t); renderNow(); renderPhases(d); renderRoutines(); renderWorkout(); renderRepMini(); renderHR(); renderGuide(t, tot); renderGaps(d, t, tot); if (!$("s-rep").hidden) renderReport();
+  renderBalance(t, tot); renderGoal(t); renderHorario(); renderPlanCard(t); renderActs(d, t); renderNow(); renderPhases(d); renderRoutines(); renderWorkout(); renderRepMini(); renderHR(); renderGuide(t, tot); renderGaps(d, t, tot); if (!$("s-rep").hidden) renderReport();
 
   // HOY: anillos
   const ds = daySleep(d);
@@ -1499,6 +1504,7 @@ function planTasks(d, id = cur){
     {k:"food", t:"Registrar tus comidas", s:`${d.meals.length} de 3 · tómale foto al plato`, done: d.meals.length >= 3, go:"foto"},
     {k:"sun", t:"15 minutos de sol en la mañana", s:"Testosterona, cortisol y melatonina", done: (d.sun||0) >= 15, set: x => x.sun = (x.sun||0) >= 15 ? null : 15},
     train,
+    weighDue(cur) || d.weight ? {k:"weigh", t:"Pesarte en ayunas", s:"Tu pesaje de la semana", done: !!d.weight, go:"weigh"} : null,
     {k:"steps", t:"Caminar 7.000 pasos", s:"Mira los pasos en tu cel y anótalos", done: (d.steps||0) >= 7000, go:"cuerpo"},
     {k:"water", t:"Tomar 8 vasos de agua", s:`${d.water} de 8 · toca para sumar uno`, done: d.water >= 8, set: x => x.water = x.water >= 8 ? 0 : x.water + 1},
     {k:"caf", t:"Nada de café después de las 2 p.m.", s:"Cortisol y melatonina", done: d.lateCaffeine === false, set: x => x.lateCaffeine = x.lateCaffeine === false ? null : false},
@@ -1549,65 +1555,115 @@ $("plan").onclick = e => {
     touchDay(); return;
   }
   if (x.go === "foto") { if (ai.key()) $("photo").click(); else show("comida"); return; }
+  if (x.go === "weigh") { $("goalCard").scrollIntoView({behavior:"smooth", block:"center"}); return; }
   if (x.go === "coach") { $("coachBtn").scrollIntoView({behavior:"smooth", block:"center"}); return; }
   show(x.go);
 };
 
 /* ---------- meta de peso y calorías ---------- */
-function renderGoal(t, tot){
+function renderBalance(t, tot){
+  const el = $("balCard"); el.hidden = !t; if (!t) return;
+  const M = mode(), bal = tot.kcal - t.tdee, left = t.kcal - tot.kcal, max = Math.max(tot.kcal, t.tdee, t.kcal) || 1, pct = v => Math.max(0, v/max*100);
+  const word = bal < 0 ? "déficit" : bal > 0 ? "superávit" : "equilibrio", good = M.dir === 0 ? "" : Math.sign(bal) === M.dir || (M.dir < 0 && bal <= 0) ? "ok" : "warn";
+  el.innerHTML = `<div class="baltop"><div><div class="label">Balance de hoy</div><h3>Comido contra gastado</h3></div><div><span class="v ${good}">${bal > 0 ? "+" : ""}${fmt(bal)}</span><span class="w">kcal de ${word}</span></div></div>
+    <div class="brow"><div class="top2"><span>Comido</span><b>${fmt(tot.kcal)} kcal</b></div><div class="bbar"><i class="food" style="width:${pct(tot.kcal)}%"></i><u style="left:${pct(t.kcal)}%" title="Tu meta"></u></div></div>
+    <div class="brow"><div class="top2"><span>Gasto del día</span><b>${fmt(t.tdee)} kcal</b></div><div class="bbar"><i class="base" style="width:${pct(t.base)}%"></i><i class="ex" style="width:${pct(t.exK)}%"></i><i class="st" style="width:${pct(t.stK)}%"></i></div>
+      <div class="bleg"><span style="--c:var(--ink)">Base ${fmt(t.base)}</span><span style="--c:var(--prot)">Ejercicio ${fmt(t.exK)}</span><span style="--c:var(--water)">Pasos ${fmt(t.stK)}${t.stepsAssumed ? " (aprox.)" : ""}</span></div></div>
+    <p class="small muted" style="margin:0">La rayita es tu meta de ${fmt(t.kcal)} kcal. ${left >= 0 ? `Te quedan <b class="ok">${fmt(left)} kcal</b> por comer.` : `Te pasaste <b class="${M.dir > 0 ? "ok" : "bad"}">${fmt(-left)} kcal</b>.`}</p>`;
+}
+/* ---------- pesaje semanal: de aquí salen el progreso y el ajuste ---------- */
+const kgTxt = v => (v > 0 ? "+" : v < 0 ? "−" : "") + r1(Math.abs(v)).toString().replace(".", ",") + " kg";
+const daysBetween = (a, b) => Math.round((parse(b) - parse(a))/864e5);
+const weighDayN = () => profile().weighDay ?? 1;
+const weighIns = () => Object.keys(cache).filter(k => k.startsWith("d-") && cache[k]?.weight && k.slice(2) <= cur).sort().map(k => ({id:k.slice(2), kg:+cache[k].weight}));
+// toca pesarse el día escogido si no se pesó hace poco; a los 8 días es porque ese día ya se pasó
+function weighDue(id){
+  if (day(id)?.weight) return false;
+  const last = weighIns().filter(x => x.id < id).pop(); if (!last) return true;
+  const gap = daysBetween(last.id, id);
+  return gap >= 8 || (gap >= 2 && parse(id).getDay() === weighDayN());
+}
+function nextWeigh(id){
+  const last = weighIns().filter(x => x.id <= id).pop(); let n = shift(id, 1);
+  if (last && daysBetween(last.id, n) < 2) n = shift(last.id, 2);
+  while (parse(n).getDay() !== weighDayN()) n = shift(n, 1);
+  return n;
+}
+const shortDate = id => `${parse(id).getDate()} ${MONTHS[parse(id).getMonth()]}`;
+const kgC = v => r1(v).toString().replace(".", ",");
+let weighOpen = false;
+function renderGoal(t){
   const p = profile(), el = $("goalCard");
-  if (!t) { el.innerHTML = `<h3>Tu meta</h3><p class="muted small">Llena tu edad, estatura y peso para calcular tus calorías y la fecha en que llegas a tu meta.</p><button class="btn-main" data-goto="yo">Poner mis datos</button>`; return; }
-  const M = mode(), w = t.w, gw = +p.goalW || null, start = +p.startW || w;
+  if (!t) { el.innerHTML = `<h3>Tu meta</h3><p class="muted small">Llena tu edad, estatura y peso para calcular tus calorías y seguir tu progreso.</p><button class="btn-main" data-goto="yo">Poner mis datos</button>`; return; }
+  const M = mode(), w = t.w, gw = +p.goalW || null, start = +p.startW || w, d = day() || blankDay();
   const verb = M.dir < 0 ? "Bajar" : M.dir > 0 ? "Subir" : "Mantener";
   const wrongWay = gw && ((M.dir < 0 && gw > w) || (M.dir > 0 && gw < w));
   const modes = `<div class="modes" role="group" aria-label="Modo">${Object.entries(MODES).map(([k,m]) => `<button data-mode="${k}" aria-pressed="${p.goal === k}">${m.n}</button>`).join("")}</div>`;
-  const tr = weightTrend(), fix = trendAdvice(tr, w);
-  let eta = "";
-  if (gw && !wrongWay && M.dir !== 0 && Math.abs(gw - w) > 0.2 && t.adj) {
-    const wk = kgPerWeek(t), weeks = Math.abs(gw - w)/wk, dt = new Date(); dt.setDate(dt.getDate() + Math.round(weeks*7));
-    eta = `≈ ${r1(wk).toString().replace(".", ",")} kg por semana · llegas más o menos el <b>${dt.getDate()} de ${MONTHS[dt.getMonth()]}${dt.getFullYear() !== new Date().getFullYear() ? " de " + dt.getFullYear() : ""}</b>`;
-  }
-  const span = gw ? Math.abs(gw - start) || 1 : 1, prog = gw ? Math.max(0, Math.min(1, Math.abs(w - start)/span)) : 0;
-  const bal = tot.kcal - t.tdee, goalBal = t.adj;
-  const balTxt = v => v < 0 ? "déficit " + fmt(-v) : v > 0 ? "superávit " + fmt(v) : "equilibrio";
-  const left = t.kcal - tot.kcal;
+  const fix = trendAdvice(weightTrend(), w);
+  const hasGoal = gw && M.dir !== 0, span = gw ? Math.abs(gw - start) || 1 : 1, prog = gw ? Math.max(0, Math.min(1, Math.abs(w - start)/span)) : 0;
+  // progreso: lo que llevas y lo que falta, con los pesajes reales
+  const moved = w - start, faltan = gw ? Math.abs(gw - w) : 0;
+  const progTxt = wrongWay ? `<span class="warn">Tu peso meta va al revés de tu modo. Cámbialo en Perfil.</span>`
+    : hasGoal ? `Llevas <b>${kgTxt(moved)}</b>${faltan > 0.1 ? ` y te faltan <b>${kgC(faltan)} kg</b>` : ` y <b class="ok">llegaste a tu meta</b> 🏁`}.`
+    : M.dir === 0 ? `Desde que empezaste: <b>${kgTxt(moved)}</b>.` : `Pon tu peso meta en Perfil para ver cuánto te falta.`;
+  // pesaje de la semana
+  const all = weighIns(), recent = all.slice(-4), due = weighDue(cur), isToday = cur === iso(new Date());
+  const list = recent.map(x => { const i = all.indexOf(x), dl = i > 0 ? x.kg - all[i-1].kg : null; return `<div><span>${shortDate(x.id)}</span><b>${kgC(x.kg)}</b><span>${dl == null ? "inicio" : kgTxt(dl)}</span></div>`; }).join("");
+  const showForm = due || weighOpen, nx = nextWeigh(cur), nxD = daysBetween(cur, nx);
+  const head = d.weight ? `<p>✓ ${isToday ? "Hoy" : "Ese día"} pesaste <b>${kgC(d.weight)} kg</b>. Próximo pesaje: <b>${DAYS[parse(nx).getDay()]} ${shortDate(nx)}</b>.</p>`
+    : due ? `<p>${isToday ? "<b>Hoy toca pesarte.</b>" : "<b>Anota el peso de ese día.</b>"} En ayunas, después de ir al baño y con la misma ropa.</p>`
+    : `<p>Próximo pesaje: <b>${DAYS[parse(nx).getDay()]} ${shortDate(nx)}</b> (${nxD === 1 ? "mañana" : "en " + nxD + " días"}).</p>`;
+  const daySel = `<select class="wdaysel" id="weighDay" aria-label="Día de pesaje">${DAYS.map((n,i) => `<option value="${i}" ${i === weighDayN() ? "selected" : ""}>${n}</option>`).join("")}</select>`;
   el.innerHTML = `${modes}
-    <div class="row between"><h3>${verb}${gw && M.dir !== 0 ? " a " + gw + " kg" : " tu peso"}</h3><span class="small muted">meta: ${balTxt(goalBal)} kcal/día</span></div>
-    ${gw && M.dir !== 0 ? `<div class="goalbar"><i style="width:${prog*100}%"></i><b style="left:${prog*100}%"></b></div>
-    <div class="row between small"><span class="muted">Empezaste: ${r1(start)} kg</span><b>Ahora: ${r1(w)} kg</b><span class="muted">Meta: ${gw} kg</span></div>` : ""}
-    ${wrongWay ? `<p class="small warn">Tu peso meta va al revés de tu modo. Cámbialo en Perfil.</p>` : eta ? `<p class="small">${eta}</p>` : ""}
-    <div class="label">Balance de hoy</div>
-    <div class="bal"><div><span class="v">${fmt(tot.kcal)}</span><span class="small muted">comiste</span></div><span class="op">−</span>
-      <div><span class="v">${fmt(t.tdee)}</span><span class="small muted">gastaste</span></div><span class="op">=</span>
-      <div><span class="v ${M.dir === 0 ? "" : Math.sign(bal) === M.dir || (M.dir < 0 && bal <= 0) ? "ok" : "warn"}">${bal > 0 ? "+" : ""}${fmt(bal)}</span><span class="small muted">${balTxt(bal).split(" ")[0]}</span></div></div>
-    <p class="small muted" style="margin:0">Gasto = ${fmt(t.base)} base + ${fmt(t.exK)} ejercicio + ${fmt(t.stK)} pasos${t.stepsAssumed ? " (aprox.)" : ""}. ${left >= 0 ? `Para tu meta te quedan <b class="ok">${fmt(left)} kcal</b> por comer.` : `Te pasaste <b class="${M.dir > 0 ? "ok" : "bad"}">${fmt(-left)} kcal</b> de tu meta.`}</p>
-    ${fix ? `<div class="todo-b" style="border-top:1px solid var(--line);padding-top:10px"><div class="hd">📈 Ajuste de la semana</div><p>${fix.msg}</p>${fix.delta ? `<button class="btn-ghost" data-pace="${fix.delta}">${fix.delta > 0 ? "Subir" : "Bajar"} mi ajuste ${Math.abs(fix.delta)} kcal</button>` : ""}</div>` : ""}`;
+    <div class="row between"><h3>${verb}${hasGoal ? " a " + gw + " kg" : " tu peso"}</h3><span class="small muted">${fmt(t.kcal)} kcal al día</span></div>
+    ${hasGoal && !wrongWay ? `<div class="goalbar"><i style="width:${prog*100}%"></i><b style="left:${prog*100}%"></b></div>
+    <div class="row between small"><span class="muted">Inicio: ${kgC(start)}</span><b>Ahora: ${kgC(w)} kg</b><span class="muted">Meta: ${gw}</span></div>` : ""}
+    <p class="small" style="margin:0">${progTxt}</p>
+    <div class="gblock"><div class="hd"><span>⚖️ Pesaje semanal</span>${daySel}</div>${head}
+      ${showForm ? `<div class="wform"><input type="number" id="wkInput" min="30" max="300" step="0.1" inputmode="decimal" placeholder="Tu peso en kg" value="${d.weight || ""}" aria-label="Peso en kilos"><button class="btn-main" data-wsave>Guardar</button></div>` : `<button class="btn-ghost small" data-wopen>${d.weight ? "Corregir el peso" : "Pesarme hoy de todas formas"}</button>`}
+      ${list ? `<div class="wlist">${list}</div>` : ""}</div>
+    <div class="gblock"><div class="hd"><span>📈 Ajuste recomendado</span></div><p>${fix.msg}</p>${fix.delta ? `<button class="btn-ghost" data-pace="${fix.delta}">${fix.delta > 0 ? "Subir" : "Bajar"} mi meta ${Math.abs(fix.delta)} kcal</button>` : ""}</div>`;
 }
-// pendiente del peso en kg por semana (mínimos cuadrados) con lo anotado en las últimas 3 semanas
+// kg por semana con los pesajes de las últimas 5 semanas (mínimos cuadrados); cuenta desde el último cambio de modo o de ajuste
 function weightTrend(){
-  const pts = Array.from({length:21}, (_,i) => shift(cur, i-20)).map((id,i) => [i, day(id)?.weight]).filter(x => x[1]);
-  if (pts.length < 3 || pts[pts.length-1][0] - pts[0][0] < 7) return null;
-  const n = pts.length, mx = pts.reduce((a,x) => a+x[0], 0)/n, my = pts.reduce((a,x) => a + +x[1], 0)/n;
-  const slope = pts.reduce((a,x) => a + (x[0]-mx)*(x[1]-my), 0) / pts.reduce((a,x) => a + (x[0]-mx)**2, 0);
-  return slope*7;
+  const p = profile(), a = p.planStart ? shift(p.planStart, -3) : "", b = p.adjAt || "", since = a > b ? a : b, from = shift(cur, -35);
+  const pts = weighIns().filter(x => x.id >= since && x.id >= from);
+  if (pts.length < 2) return {n: pts.length, kgWk: null, span: 0};
+  const xs = pts.map(x => daysBetween(pts[0].id, x.id)), n = pts.length, span = xs[n-1];
+  if (span < 6) return {n, kgWk: null, span};
+  const mx = xs.reduce((s,x) => s+x, 0)/n, my = pts.reduce((s,x) => s+x.kg, 0)/n;
+  const slope = pts.reduce((s,x,i) => s + (xs[i]-mx)*(x.kg-my), 0) / xs.reduce((s,x) => s + (x-mx)**2, 0);
+  return {n, kgWk: slope*7, span};
 }
 // como un nutricionista: compara lo que bajaste o subiste con el ritmo sano del modo y propone mover 100 kcal
-function trendAdvice(kgWk, w){
-  const M = mode(), p = profile();
-  if (kgWk == null) return {msg:`Pésate en ayunas al menos 3 veces en 1 o 2 semanas. Con eso te digo si tus ${fmt(t0().kcal)} kcal están funcionando o hay que moverlas.`};
-  const pct = kgWk/w*100, [lo, hi] = M.rate, txt = `${kgWk > 0 ? "+" : ""}${r1(kgWk).toString().replace(".", ",")} kg por semana`;
+function trendAdvice(tr, w){
+  const M = mode(), p = profile(), kcal = fmt(t0().kcal), {n, kgWk, span} = tr;
+  if (kgWk == null) return {msg: n === 0 ? `Sigue con ${kcal} kcal al día. Con tu primer pesaje empiezo a medir, y con 3 te digo si toca moverlas.`
+    : `Sigue con ${kcal} kcal al día. Con ${n === 1 ? "2 pesajes más" : "el próximo pesaje"} te digo si toca moverlas.`};
+  const pct = kgWk/w*100, [lo, hi] = M.rate, txt = `${kgTxt(kgWk)} por semana`;
+  // una sola semana puede ser agua: con menos de 3 pesajes no se mueve nada
+  if (n < 3 || span < 10) return {msg:`Vas ${txt}, pero una semana puede ser agua. Sigue con ${kcal} kcal; con el próximo pesaje te digo si toca moverlas.`};
   const canMove = ["bajar","ganar","volumen"].includes(p.goal);
   // por debajo del rango siempre falta comida; por encima siempre sobra (delta > 0 = más calorías)
   if (pct < lo) return {msg:`Vas ${txt}: ${M.dir > 0 ? "subes muy poco" : "estás bajando muy rápido y pierdes músculo"}. ${canMove ? "Come 100 kcal más al día." : "Come un poco más."}`, delta: canMove ? 100 : 0};
   if (pct > hi) return {msg:`Vas ${txt}: ${M.dir < 0 ? "no estás bajando lo suficiente" : "estás subiendo muy rápido, eso es más grasa que músculo"}. ${canMove ? "Quita 100 kcal al día." : "Come un poco menos."}`, delta: canMove ? -100 : 0};
-  return {msg:`Vas ${txt}: justo en el ritmo sano para ${M.n.toLowerCase()}. Sigue igual.`};
+  return {msg:`Vas ${txt}: justo en el ritmo sano para ${M.n.toLowerCase()}. Sigue con ${kcal} kcal.`};
 }
 const t0 = () => targets() || {kcal:0};
+$("goalCard").addEventListener("change", e => { if (e.target.id !== "weighDay") return; profile().weighDay = +e.target.value; store.save(); render(); });
 $("goalCard").addEventListener("click", e => {
+  if (e.target.closest("[data-wopen]")) { weighOpen = true; renderGoal(targets()); $("wkInput")?.focus(); return; }
+  if (e.target.closest("[data-wsave]")) {
+    const v = +$("wkInput").value;
+    if (!(v >= 30 && v <= 300)) { toast("Escribe tu peso en kilos, por ejemplo 89,5"); return; }
+    const prev = weighIns().filter(x => x.id < cur).pop(), dd = getDay(); dd.weight = v; weighOpen = false; touchDay();
+    toast(prev ? `Guardado: ${kgTxt(v - prev.kg)} desde el ${shortDate(prev.id)} ⚖️` : "Primer pesaje guardado ⚖️");
+    return;
+  }
   const m = e.target.closest("[data-mode]"), pc = e.target.closest("[data-pace]"), p = profile();
   if (m && p.goal !== m.dataset.mode) { p.goal = m.dataset.mode; p.pace = defaultPace(p.goal); p.startW = lastWeight(); p.planStart = cur; store.save(); render(); toast(`Modo ${mode().n}: ${mode().d}`); }
   // delta > 0 = más calorías: en déficit baja el déficit, en superávit sube el superávit
-  if (pc) { const dlt = +pc.dataset.pace, M = mode(); p.pace = Math.max(100, Math.min(1000, (+p.pace || M.pace) + dlt*M.dir)); store.save(); render(); toast(`Listo: tu meta ahora es ${fmt(t0().kcal)} kcal`); }
+  if (pc) { const dlt = +pc.dataset.pace, M = mode(); p.pace = Math.max(100, Math.min(1000, (+p.pace || M.pace) + dlt*M.dir)); p.adjAt = weighIns().pop()?.id || cur; store.save(); render(); toast(`Listo: tu meta ahora es ${fmt(t0().kcal)} kcal`); }
 });
 
 /* ---------- ejercicio: lista del día y calorías quemadas ---------- */
@@ -1662,7 +1718,6 @@ function schedule(id){
   const wake = toMin(p.wakeGoal || "06:00"), bed = wake - st*60 - 15 + 1440; // minutos desde la medianoche del día
   const noEx = p.exercise === "no", isTrain = !noEx && (p.trainDays || []).includes(parse(id).getDay()), sess = +p.sessMin || 60;
   let trainAt = toMin(p.trainTime || "18:00"); if (trainAt < wake) trainAt += 1440;
-  // act: lo que pasa al tocar el paso en "Tu día"
   const I = [], add = (m, ic, txt, done, sub, act) => I.push({m, ic, txt, done:!!done, sub, act});
   add(wake, "☀️", "Despertar", d.wake, "Toca cuando te levantes", "wake");
   add(wake + 15, "🌤️", "Sol de mañana, 15 min", (d.sun || 0) >= 15, "Toca cuando lo hagas", "sun");
@@ -1686,19 +1741,6 @@ function schedule(id){
   add(bed, "🌙", "A dormir", !!day(shift(id, 1))?.bed, `${st} h de sueño · toca al acostarte`, "sleep");
   I.sort((a,b) => a.m - b.m);
   return {items:I, isTrain, late: isTrain && trainAt > bed - 180, bed, wake, trainAt};
-}
-function renderDay(){
-  const S = schedule(cur), now = new Date(), today = cur === iso(now);
-  const nowM = now.getHours()*60 + now.getMinutes() + (now.getHours()*60 < S.wake - 60 ? 1440 : 0);
-  const nxt = today ? S.items.find(x => !x.done && x.m + 30 >= nowM) : null;
-  // vista simple: solo lo que falta (máximo 4) y un botón para ver el día completo
-  const compact = isSimple() && !dayOpen, shown = compact ? S.items.filter(x => !x.done).slice(0, 4) : S.items, nDone = S.items.filter(x => x.done).length;
-  $("dayCard").innerHTML = `<div class="row between"><h3>Tu día</h3><span class="small muted">${S.isTrain ? "💪 día de entreno · " : ""}${nDone} de ${S.items.length}</span></div>
-    <div class="bar"><i style="width:${nDone/S.items.length*100}%;background:var(--prot)"></i></div>
-    ${S.late ? `<p class="small warn" style="margin:0">Entrenar a las ${toHHMM(S.trainAt)} te deja menos de 3 horas antes de dormir y te quita sueño. Mejor antes de las ${toHHMM(S.bed - 180)}</p>` : ""}
-    <div class="tl">${shown.map(x => `<button class="tli ${x.done ? "done" : x === nxt ? "now" : ""}" data-dact="${x.act || ""}"><span class="tm">${toHHMM(x.m)}</span><span class="ic">${x.done ? "✓" : x.ic}</span><span class="tx"><b>${esc(x.txt)}</b>${x.sub && !x.done ? `<span>${esc(x.sub)}</span>` : ""}</span></button>`).join("") || `<p class="small ok">¡Cumpliste todo el día! 🎉</p>`}</div>
-    ${isSimple() ? `<button class="btn-ghost small" data-dayall>${dayOpen ? "Ver solo lo que falta" : `Ver todo el día (${nDone} hecho${nDone === 1 ? "" : "s"})`}</button>` : ""}
-    ${(profile().trainDays || []).length || profile().exercise === "no" ? "" : `<button class="btn-ghost" data-goto="yo">Pon tus días y hora de entreno</button>`}`;
 }
 function renderHorario(){
   const p = profile();
@@ -1849,14 +1891,14 @@ function renderGaps(d, t, tot){
 
 /* ---------- app adaptable: vista simple o completa, ejercicio y qué seguir ---------- */
 const isSimple = () => (profile().view || "simple") === "simple";
-let dayOpen = false, tagged = false;
+let tagged = false;
 // marca cada tarjeta con lo que necesita para mostrarse: adv = solo vista completa, ex = hace ejercicio, y el módulo
 function tagCards(){
   if (tagged || !document.querySelector) return; tagged = true;
   const T = (id, flags) => { const el = $(id), c = el?.closest?.(".card") || el; if (c?.dataset) flags.split(" ").forEach(f => c.dataset[f] = "1"); };
   T("planN","adv"); T("horms","adv horm"); T("coachBtn","adv"); T("nutr","adv food"); T("cycles","adv sleep"); T("streak","adv");
   T("hrCard","adv ex"); T("routines","ex"); T("suppPills","adv"); T("waist","adv body"); T("notes","adv"); T("wChart","body"); T("planCard","body");
-  T("gapCard","food"); T("macroGuide","food"); T("sleepBars","sleep");
+  T("balCard","food"); T("goalCard","body"); T("gapCard","food"); T("macroGuide","food"); T("sleepBars","sleep");
   ["hTrain","hSess"].forEach(id => { const f = $(id)?.closest?.(".field"); if (f) f.dataset.ex = "1"; });
   const hd = $("hDays")?.closest?.(".field"); if (hd) hd.dataset.ex = "1";
   const D = (el, k) => { if (el?.dataset) el.dataset[k] = "1"; };
@@ -1879,22 +1921,6 @@ $("sEx").onclick = e => { const x = e.target.closest("[data-ex]"); if (!x) retur
   if (p.exercise === "no" && ["ganar","volumen"].includes(p.goal)) { p.goal = "mantener"; toast("Sin ejercicio, el modo pasó a Mantener"); }
   store.save(); render(); };
 $("sMods").onclick = e => { const x = e.target.closest("[data-mod]"); if (!x) return; const p = profile(), m = p.modules || (p.modules = {}); m[x.dataset.mod] = m[x.dataset.mod] === false; store.save(); render(); };
-$("dayCard").addEventListener("click", e => {
-  if (e.target.closest("[data-dayall]")) { dayOpen = !dayOpen; renderDay(); return; }
-  const b = e.target.closest("[data-dact]"); if (!b) return;
-  const a = b.dataset.dact, d = getDay();
-  if (a === "wake") return markWake();
-  if (a === "sleep") return markSleep();
-  if (a === "sun") { d.sun = (d.sun || 0) >= 15 ? null : 15; touchDay(); if (d.sun) toast("+10 puntos · sol de mañana ☀️"); return; }
-  if (a === "caf") { d.lateCaffeine = d.lateCaffeine === false ? null : false; touchDay(); return; }
-  if (a === "scr") { d.screensOff = !d.screensOff; touchDay(); return; }
-  if (a === "walk") { const has = actsOf(d).some(x => x.type === "caminar"); d.acts = actsOf(d);
-    if (has) d.acts = d.acts.filter(x => x.type !== "caminar"); else d.acts.push({type:"caminar", min:30, int:1});
-    syncEx(d); touchDay(); if (!has) toast(`Caminata anotada · ${fmt(actKcal({type:"caminar", min:30, int:1}, lastWeight() || 70))} kcal 🚶`); return; }
-  if (a === "food") { if (ai.key()) $("photo").click(); else show("comida"); return; }
-  if (a === "train") { goRoutines(); return; }
-});
-
 /* ---------- siestas ---------- */
 const r1c = x => String(r1(x)).replace(".", ",");
 function renderNaps(d){
@@ -2104,54 +2130,6 @@ function nextRoutine(){
   const lastDone = id => Object.keys(cache).filter(k => k.startsWith("d-") && k < "d-"+cur && cache[k]?.workout?.rid === id && cache[k].workout.finished).sort().pop() || "";
   return R.slice().sort((a,b) => lastDone(a.id).localeCompare(lastDone(b.id)))[0];
 }
-function renderTodo(d, t, tot){
-  const el = $("todo"), M = mode(), p = profile();
-  if (!t) { el.innerHTML = `<h3>Hoy te toca</h3><p class="small muted">Llena tus datos y te digo qué entrenar, qué comer y a qué hora dormir.</p>`; return; }
-  const week = Array.from({length:7}, (_,i) => day(shift(cur, -i))).filter(Boolean);
-  const gymN = week.filter(isStrength).length, cardioN = week.filter(x => actsOf(x).some(a => CARDIO.includes(a.type))).length;
-  let streak = 0; for (let i = 1; i <= 6; i++) { const x = day(shift(cur, -i)); if (x && actsOf(x).some(a => a.type !== "caminar")) streak++; else break; }
-  const sh = sleepHours(d), done = actsOf(d).filter(a => a.type !== "caminar"), steps = d.steps ?? 0;
-  const plan = (p.trainDays || []).length ? p.trainDays : null, dow = parse(cur).getDay(), gymTarget = plan ? plan.length : M.gym;
-  // ENTRENAMIENTO
-  let train, btn = "";
-  if (p.exercise === "no") train = actsOf(d).length || (d.steps || 0) >= 6000 ? `Ya te moviste hoy. Bien hecho: caminar a diario es lo que más protege el corazón, el azúcar y el ánimo.` : `Muévete un poco: camina 30 minutos (o ${fmt(6000)} pasos). Si puedes, 10 minutos en casa: sentarte y pararte de una silla, flexiones contra la pared y elevar talones.`;
-  else if (done.length) train = `Ya entrenaste hoy (${fmt(t.exK)} kcal). Ahora recupera: proteína en la siguiente comida, agua y 10 minutos de estiramiento.`;
-  else if (d.exType === "descanso") train = `Hoy es descanso. Camina para llegar a ${fmt(M.steps)} pasos: suma sin cansar los músculos.`;
-  else if (sh != null && sh < 6) train = `Dormiste ${sh.toFixed(1)} h. Hoy mejor suave: camina 30-40 minutos o haz movilidad. Pesas pesadas con poco sueño rinden menos y te puedes lesionar.`;
-  else if (!plan && streak >= 3) train = `Llevas ${streak} días seguidos entrenando. Hoy descansa o camina: el músculo crece cuando descansas.`;
-  else if (plan && !plan.includes(dow)) { const nx = nextTrainDay(cur);
-    train = `Hoy no es día de pesas. Descanso activo: camina hasta ${fmt(M.steps)} pasos${cardioN < M.cardio ? " o haz 20-30 minutos de cardio suave" : ""}. Próximo entreno: <b>${nx ? (nx.days === 1 ? "mañana" : DOWL[nx.dow]) : "—"} a las ${toHHMM(toMin(p.trainTime || "18:00"))}</b>.`; }
-  else if (plan || gymN < gymTarget) { const r = nextRoutine();
-    train = `Hoy toca pesas${r ? ": <b>" + esc(r.name) + "</b>" : ""}${plan ? " a las <b>" + toHHMM(toMin(p.trainTime || "18:00")) + "</b>" : ""}, ${p.sessMin || 60} minutos. Llevas ${gymN} de ${gymTarget} días esta semana. Intenta subir 1 repetición o 2,5 kg frente a la vez pasada.`;
-    if (r) btn = `<button class="btn-main" data-start="${r.id}">Ver rutinas</button>`; }
-  else if (cardioN < M.cardio) train = `Hoy toca cardio: 25-35 minutos de trote, bici o un partido a ritmo moderado (unas ${fmt(actKcal({type:"correr", min:30, int:1}, t.w))} kcal). Llevas ${cardioN} de ${M.cardio} esta semana.`;
-  else train = `Ya cumpliste la semana (${gymN} de pesas, ${cardioN} de cardio). Hoy camina o descansa.`;
-  // COMIDA
-  const left = t.kcal - tot.kcal, protLeft = Math.round(t.prot - tot.prot), h = new Date().getHours();
-  let food, ideas = [];
-  if (!d.meals.length) { food = `Arranca con proteína: tu meta hoy es <b>${fmt(t.kcal)} kcal</b> y <b>${t.prot} g</b> de proteína.`; ideas = [FOODS.meal[2], FOODS.lean[2]]; }
-  else if (left > 150) {
-    food = `Te faltan <b>${fmt(left)} kcal</b> y <b>${Math.max(0, protLeft)} g</b> de proteína.`;
-    ideas = left > 600 ? (M.dir > 0 ? [FOODS.dense[0], FOODS.meal[0]] : [FOODS.meal[0], FOODS.meal[1]]) : protLeft > 20 ? FOODS.lean.slice(0, 2) : [FOODS.dense[2], FOODS.lean[2]];
-    if (M.dir > 0 && left > 500 && h >= 18) food += " Es tarde y te falta harto: un batido es lo más fácil.";
-  } else if (left >= -150) food = M.dir < 0 ? `Llegaste a tu meta. Si te da hambre, algo con mucha proteína y pocas calorías.` : `Llegaste a tu meta de hoy. Bien.`, ideas = M.dir < 0 ? [FOODS.lean[2], FOODS.lean[3]] : [];
-  else food = M.dir > 0 ? `Te pasaste ${fmt(-left)} kcal: en superávit no es grave si no pasa todos los días.` : `Te pasaste ${fmt(-left)} kcal. No compenses mañana sin comer: sigue normal, una comida no daña la semana.`;
-  if (protLeft > 0 && left <= 150 && left >= -150) food += ` Te faltan ${protLeft} g de proteína.`;
-  // SUEÑO
-  const st = sleepGoal(t), wake = toMin(p.wakeGoal || "06:00"), bed = wake - st*60 - 15;
-  const sleepTips = [`Última comida antes de las <b>${toHHMM(bed - 120)}</b>`, `Café solo hasta las 2 p.m.`, `Pantallas fuera desde las <b>${toHHMM(bed - 60)}</b>`];
-  if (M.dir < 0) sleepTips.push("En déficit, deja cerca del 20% de tus calorías para la cena con proteína: el hambre de noche quita sueño");
-  if (done.length) sleepTips.push("Entrenaste: duerme las horas completas, ahí se construye el músculo");
-  el.innerHTML = `<div class="row between"><h3>Hoy te toca</h3><span class="small muted">modo ${M.n.toLowerCase()}</span></div>
-    <div class="todo-b"><div class="hd">${p.exercise === "no" ? "🚶 Movimiento" : "💪 Entrenamiento"}</div><p>${train}</p>${btn}<span class="small muted">Pasos: ${fmt(steps)} de ${fmt(p.exercise === "no" ? 7000 : M.steps)}</span></div>
-    <div class="todo-b"><div class="hd">🍽️ Comida</div><p>${food}</p>${ideas.length ? `<ul>${ideas.map(x => `<li>${x}</li>`).join("")}</ul>` : ""}</div>
-    <div class="todo-b"><div class="hd">🌙 Sueño</div><p>Para dormir ${st} h y levantarte a las ${toHHMM(wake)}: acuéstate a las <b>${toHHMM(bed)}</b></p><ul>${sleepTips.map(x => `<li>${x}</li>`).join("")}</ul></div>`;
-}
-$("todo").addEventListener("click", e => {
-  const b = e.target.closest("[data-start]"); if (!b) return;
-  goRoutines();
-});
-
 /* ---------- sueño: un toque al acostarte y al despertar ---------- */
 const nowHHMM = () => { const d = new Date(); return pad(d.getHours()) + ":" + pad(d.getMinutes()); };
 const dayFor = id => cache["d-"+id] || (cache["d-"+id] = blankDay());
@@ -2223,7 +2201,6 @@ function ensureEssentials(){
 }
 let editingRoutine = null;
 // lleva a Mis rutinas sin empezar nada: la rutina arranca solo cuando tocas Empezar
-function goRoutines(){ show("cuerpo"); renderRoutines(); setTimeout(() => $("routines").scrollIntoView({behavior:"smooth", block:"center"}), 120); }
 function renderRoutines(){
   const R = routines().items, w = day()?.workout, sug = profile().exercise === "no" || w ? null : nextRoutine()?.id;
   $("routines").innerHTML = R.length ? R.map(r => `<div class="rt${r.id === sug ? " sug" : ""}"><div class="nm">${r.id === sug ? `<span class="sugtag">Sugerida hoy</span>` : ""}<b>${esc(r.name)}</b><span>${r.ex.map(x => esc(x[0])).join(" · ")}</span></div>
