@@ -266,6 +266,33 @@ body.simple .screen .card .note.keep{display:block}
 .advice{white-space:pre-wrap;line-height:1.65;font-size:14.5px}
 .advice:empty{display:none}
 
+/* plan de Ares */
+.ares{background:linear-gradient(160deg,#141821,#1F2533);color:#F3F5F9;border:none}
+.ares .muted,.ares .note{color:#A9B1C2}
+.ares-h{display:flex;align-items:center;gap:10px}
+.ares-h .av{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;font:700 15px Sora,sans-serif;background:linear-gradient(135deg,var(--kcal),var(--sleep));color:#fff;flex:none}
+.ares-h h3{margin:0;color:#fff}
+.ares-msg{white-space:pre-wrap;line-height:1.6;font-size:14.5px;margin:12px 0 4px}
+.ares-m{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:14px 0}
+.ares-m div{background:rgba(255,255,255,.06);border-radius:12px;padding:10px 12px}
+.ares-m b{display:block;font:700 18px Sora,sans-serif;color:#fff}
+.ares-m span{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#A9B1C2}
+.ares-f{margin:6px 0 0;padding-left:18px;line-height:1.55;font-size:14px}
+.ares details{margin-top:10px;font-size:14px;line-height:1.6}
+.ares summary{cursor:pointer;font-weight:700;color:#fff}
+.ares-x{white-space:pre-wrap;margin-top:6px}
+.ares-s{margin-top:12px;font-size:12px;color:#A9B1C2}
+
+/* respirar */
+.relax-n{font-size:13px;margin-top:2px}
+.breath{position:fixed;inset:0;z-index:60;background:linear-gradient(180deg,var(--night1),#fff);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px 16px}
+.breath[hidden]{display:none}
+.bwrap{width:240px;height:240px;display:grid;place-items:center}
+.bcirc{width:240px;height:240px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,#8E8CF0,var(--sleep));color:#fff;font:700 22px Sora,sans-serif;transform:scale(.6);box-shadow:0 20px 60px rgba(88,86,214,.35)}
+.breath .disp{font-size:34px}
+.breath .note{max-width:320px;text-align:center}
+.breath .pills{justify-content:center}
+
 /* agua */
 .water{display:flex;gap:6px;flex-wrap:wrap}
 .glass{width:26px;height:34px;border-radius:4px 4px 8px 8px;border:2px solid var(--line);background:transparent;padding:0;position:relative;overflow:hidden}
@@ -433,6 +460,8 @@ textarea{min-height:70px;resize:vertical}
       <div class="lvl" id="lvl"></div>
     </div>
 
+    <div class="card ares" id="aresCard" hidden></div>
+
     <div class="card nowcard" id="nowCard" hidden></div>
 
     <div class="card" id="repMini"></div>
@@ -460,6 +489,11 @@ textarea{min-height:70px;resize:vertical}
       <p class="note">Lee todo tu día y te dice qué comer en lo que queda, la rutina de hoy, a qué hora dormir y qué hábito mejorar.</p>
       <div class="advice" id="advice"></div>
       <div class="row"><button class="btn-main" id="coachBtn" disabled>Pedir consejo de hoy</button><button class="btn-ghost" id="coachStop" hidden>Parar</button></div>
+    </div>
+
+    <div class="card" id="relaxCard">
+      <div class="row between"><div><h3>Relajarte</h3><div class="relax-n muted" id="relaxN"></div></div><button class="btn-main" id="relaxBtn">Respirar</button></div>
+      <p class="note">Respirar lento por la nariz, soltando el aire más largo de lo que lo tomas, baja el pulso y el estrés. Cinco minutos al día suman a tu cortisol, y antes de dormir te ayudan a caer en sueño profundo.</p>
     </div>
 
     <div class="card">
@@ -728,6 +762,27 @@ textarea{min-height:70px;resize:vertical}
         <button type="submit" class="btn-main">Guardar</button>
       </form>
       <div class="small" id="keyMsg"></div>
+      <h3>Conexión con Ares</h3>
+      <p class="note">Tus datos se copian a un repositorio <b>privado</b> tuyo en GitHub. Ares los lee, revisa cómo vas y te deja metas y tareas en "Plan de Ares". La llave se guarda solo en este celular.</p>
+      <details class="small"><summary><b>Cómo sacar la llave (una sola vez)</b></summary>
+        <ol style="padding-left:18px;line-height:1.6;margin:8px 0">
+          <li>Entra a <b>github.com/settings/personal-access-tokens/new</b> con tu cuenta.</li>
+          <li>Nombre: <b>Cuerpo Ares</b>. Vencimiento: 1 año.</li>
+          <li>Repository access: <b>Only select repositories</b> → <b>cuerpo-ares-datos</b>.</li>
+          <li>Permissions → Repository → <b>Contents: Read and write</b>. Nada más.</li>
+          <li>Generate token, cópiala y pégala aquí.</li>
+        </ol>
+      </details>
+      <form class="row" id="ghForm" style="flex-wrap:nowrap">
+        <input id="ghIn" type="password" autocomplete="off" placeholder="Pega la llave de GitHub">
+        <button type="submit" class="btn-main">Guardar</button>
+      </form>
+      <div class="row">
+        <button class="btn-ghost" id="syncBtn">Sincronizar ahora</button>
+        <button class="btn-ghost" id="planPasteBtn">Pegar plan de Ares</button>
+      </div>
+      <textarea id="planIn" hidden placeholder="Pega aquí el plan que te dio Ares y vuelve a tocar el botón"></textarea>
+      <div class="small" id="syncMsg"></div>
       <h3>Tus datos</h3>
       <p class="note">Todo queda guardado en este celular. Haz una copia de vez en cuando por si cambias de celular o borras la app.</p>
       <div class="row">
@@ -758,6 +813,23 @@ textarea{min-height:70px;resize:vertical}
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="onb" id="onb" hidden><form class="in" id="onbIn" autocomplete="off"></form></div>
+
+<div class="breath" id="breath" hidden role="dialog" aria-modal="true" aria-label="Respiración guiada">
+  <div class="pills" id="bPat">
+    <button class="pill" data-p="calma" aria-pressed="true">Calma 4-6</button>
+    <button class="pill" data-p="dormir">Dormir 4-7-8</button>
+    <button class="pill" data-p="cuadrada">Cuadrada 4-4-4-4</button>
+  </div>
+  <div class="bwrap"><div class="bcirc" id="bCirc"><span id="bTxt">Listo</span></div></div>
+  <div class="disp" id="bTime">5:00</div>
+  <div class="pills" id="bMins">
+    <button class="pill" data-m="3">3 min</button>
+    <button class="pill" data-m="5" aria-pressed="true">5 min</button>
+    <button class="pill" data-m="10">10 min</button>
+  </div>
+  <div class="row"><button class="btn-main" id="bGo">Empezar</button><button class="btn-ghost" id="bClose">Cerrar</button></div>
+  <p class="note">Por la nariz, hombros sueltos. Si te mareas, respira normal un momento.</p>
+</div>
 
 <nav class="tabbar" aria-label="Secciones">
   <div class="tabs">
@@ -815,8 +887,10 @@ const store = {
   init(){
     try { cache = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch { cache = {}; }
     setStatus("Guardado en este celular", true); render();
+    sync.auto();
   },
   save(){
+    sync.dirty = true;
     clearTimeout(this.timer);
     this.timer = setTimeout(() => {
       try { localStorage.setItem(KEY, JSON.stringify(cache)); setStatus("Guardado en este celular", true); }
@@ -911,17 +985,19 @@ function targets(id){
   const pace = M.dir === 0 ? 0 : p.goal === "recomp" ? M.pace : (+p.pace || M.pace);
   // nunca por debajo del metabolismo basal ni de 1.500 (hombre) / 1.200 (mujer)
   const floor = Math.round(Math.max(bmr, p.sex === "f" ? 1200 : 1500));
-  const raw = tdee + M.dir*pace;
-  const kcal = Math.max(raw, floor);
+  // si Ares dejó plan, manda: "ajuste" = kcal sobre el gasto del día (se mueve con el ejercicio); "kcal" = cifra fija
+  const C = coachOn(id)?.metas || {};
+  const raw = C.ajuste != null ? tdee + +C.ajuste : C.kcal ? +C.kcal : tdee + M.dir*pace;
+  const kcal = Math.round(Math.max(raw, floor));
   // sin ejercicio basta 1,2-1,4 g/kg (más alto desde los 50 para no perder músculo)
-  const prot = Math.round(w*(p.exercise === "no" ? (p.age >= 50 ? 1.4 : 1.2) : M.prot));
+  const prot = C.prot ? +C.prot : Math.round(w*(p.exercise === "no" ? (p.age >= 50 ? 1.4 : 1.2) : M.prot));
   const fat = Math.round(kcal*0.28/9);
   const f = p.sex === "f", age = +p.age || 25;
   // metas diarias de referencia para adultos 19-30 años (IOM); azúcar y sodio son límites máximos
   return { kcal, prot, fat, carb: Math.max(0, Math.round((kcal - prot*4 - fat*9)/4)), fiber: f ? (age >= 51 ? 21 : 25) : (age >= 51 ? 30 : 38), sugar: f ? 40 : 50,
            vitA: f ? 700 : 900, vitC: f ? 75 : 90, vitD: age >= 71 ? 20 : 15, b12: 2.4, folate: 400,
            calcium: (f && age >= 51) || age >= 71 ? 1200 : 1000, iron: f && age < 51 ? 18 : 8, mag: f ? (age >= 31 ? 320 : 310) : (age >= 31 ? 420 : 400), zinc: f ? 8 : 11, potassium: f ? 2600 : 3400, sodium: 2300,
-           omega3: f ? 1.1 : 1.6, vitE: 15, vitK: f ? 90 : 120, b6: age >= 51 ? (f ? 1.5 : 1.7) : 1.3, selenium: 55, sleep: Number(p.sleep)||9, tdee, adj: kcal - tdee, capped: raw < floor, w, base, exK, stK, stepsAssumed, bmr: Math.round(bmr) };
+           omega3: f ? 1.1 : 1.6, vitE: 15, vitK: f ? 90 : 120, b6: age >= 51 ? (f ? 1.5 : 1.7) : 1.3, selenium: 55, sleep: Number(C.sueno)||Number(p.sleep)||9, tdee, adj: kcal - tdee, capped: raw < floor, w, base, exK, stK, stepsAssumed, bmr: Math.round(bmr) };
 }
 // resume la lista de actividades en los campos viejos que usan las hormonas y el plan
 function syncEx(d){
@@ -983,6 +1059,7 @@ function hormones(d, t, id){
     ]},
     {n:"Cortisol bajo control", color:"var(--bad)", why:"La hormona del estrés. Alta todo el día te quita músculo, sueño y testosterona, y te hace guardar grasa en la barriga.", f:[
       F("Ansiedad baja", stress, 3, "5 minutos de respiración lenta (4 segundos inhalar, 6 exhalar), caminar sin celular, escribir lo que te preocupa."),
+      F("Respirar o relajarte 5 min", d.relax ? r(d.relax, 5) : null, 2, "Toca Respirar en Hoy. Soltar el aire más largo de lo que lo tomas baja el pulso y el cortisol."),
       F("Dormir 7 h o más", sleep7, 2, "Dormir poco sube el cortisol al otro día."),
       F("Sol de mañana", d.sun == null ? null : r(d.sun, 10), 1, "La luz al despertar pone el cortisol alto en la mañana y bajo en la noche, que es lo sano."),
       F("Sin café después de las 2 p.m.", d.lateCaffeine == null ? null : d.lateCaffeine ? 0 : 1, 2, "La cafeína dura unas 6 horas en el cuerpo y te sube el cortisol de noche."),
@@ -1031,7 +1108,7 @@ function render(){
   $("dateLong").textContent = `${DAYS[dt.getDay()]} ${dt.getDate()} de ${MONTHS[dt.getMonth()]}`;
   const name = (profile().name || "").trim().split(" ")[0], hr = new Date().getHours();
   $("hello").textContent = cur !== today ? "Ese día" : (hr < 12 ? "Buenos días" : hr < 19 ? "Buenas tardes" : "Buenas noches") + (name ? ", " + name : "");
-  renderPlan(d, t);
+  renderPlan(d, t); renderAres(t); renderRelax(d); renderSync();
   renderBalance(t, tot); renderGoal(t); renderHorario(); renderPlanCard(t); renderActs(d, t); renderNow(); renderPhases(d); renderRoutines(); renderWorkout(); renderRepMini(); renderHR(); renderGuide(t, tot); renderGaps(d, t, tot); if (!$("s-rep").hidden) renderReport();
 
   // HOY: anillos
@@ -1432,6 +1509,160 @@ $("keyForm").onsubmit = async e => {
   }
 };
 
+/* ---------- Ares: lee tus datos y te deja el plan ---------- */
+const aresPlan = () => cache.coach || null;
+// el plan cuenta desde su fecha; los días de antes se miden como siempre
+const coachOn = id => { const c = aresPlan(); return c && (!c.fecha || (id || cur) >= c.fecha) ? c : null; };
+const COACH_FIELDS = ["earlyDinner", "screensOff"];
+// tareas que pidió Ares: suman puntos y rachas como las demás; "dias" = 0 domingo … 6 sábado
+function coachTasks(d, id){
+  const c = coachOn(id), wd = parse(id).getDay();
+  return (c?.tareas || []).filter(x => x?.id && x.t && (!x.dias || x.dias.includes(wd))).map(x => x.tipo === "respirar"
+    ? {k:"a-"+x.id, t:esc(x.t), s:esc(x.s || `${d.relax || 0} de ${x.min || 5} min · toca para empezar`), done: (d.relax || 0) >= (x.min || 5), go:"relax"}
+    // "campo" marca un dato que ya usan las hormonas (ej. cenar temprano) en vez de una casilla aparte
+    : COACH_FIELDS.includes(x.campo) ? {k:"a-"+x.id, t:esc(x.t), s:esc(x.s || "Lo pidió Ares"), done: !!d[x.campo], set: y => y[x.campo] = !y[x.campo]}
+    : {k:"a-"+x.id, t:esc(x.t), s:esc(x.s || "Lo pidió Ares"), done: !!d.ct?.[x.id], set: y => { y.ct = {...(y.ct || {})}; if (y.ct[x.id]) delete y.ct[x.id]; else y.ct[x.id] = 1; }});
+}
+function setCoach(c, from){
+  if (!c || typeof c !== "object" || !(c.metas || c.mensaje || c.tareas)) throw {code:"bad_plan"};
+  const nuevo = JSON.stringify(c) !== JSON.stringify(cache.coach || null);
+  cache.coach = c; store.save(); render();
+  if (nuevo && from) toast("Ares te dejó un plan nuevo 💪");
+  return nuevo;
+}
+const ago = ts => { if (!ts) return "nunca"; const m = Math.round((Date.now() - ts)/60000); return m < 1 ? "hace un momento" : m < 60 ? `hace ${m} min` : m < 1440 ? `hace ${Math.round(m/60)} h` : `hace ${Math.round(m/1440)} días`; };
+function renderAres(t){
+  const c = coachOn(), el = $("aresCard");
+  if (!c) { el.hidden = true; return; }
+  el.hidden = false;
+  const m = c.metas || {}, cells = [];
+  if (t) cells.push([fmt(t.kcal), "kcal hoy"], [t.prot + " g", "proteína"]);
+  if (m.sueno || m.dormir) cells.push([(m.sueno ? m.sueno + " h" : "") + (m.dormir ? (m.sueno ? " · " : "") + m.dormir : ""), "sueño"]);
+  if (m.entrenos) cells.push([m.entrenos + " por semana", "fuerza"]);
+  if (m.pasos) cells.push([fmt(m.pasos), "pasos al día"]);
+  if (m.peso) cells.push([m.peso + " kg", "meta del bloque"]);
+  const rev = c.revisar ? parse(c.revisar) : null, s = sync.state();
+  el.innerHTML = `<div class="ares-h"><div class="av">A</div><div><h3>Plan de Ares</h3><div class="small muted">${esc(c.fase || "Tu entrenador")}${rev ? ` · revisa el ${rev.getDate()} de ${MONTHS[rev.getMonth()]}` : ""}</div></div></div>
+    ${c.mensaje ? `<div class="ares-msg">${esc(c.mensaje)}</div>` : ""}
+    ${cells.length ? `<div class="ares-m">${cells.map(([v,l]) => `<div><b>${esc(v)}</b><span>${l}</span></div>`).join("")}</div>` : ""}
+    ${c.foco?.length ? `<div class="small muted" style="font-weight:700;letter-spacing:.05em">ESTA SEMANA</div><ul class="ares-f">${c.foco.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
+    ${c.entreno ? `<details><summary>Tu entreno</summary><div class="ares-x">${esc(c.entreno)}</div></details>` : ""}
+    <div class="ares-s">${sync.tok() ? `Sincronizado ${ago(s.push)}` : "Conecta Ares en Ajustes para que vea tus datos solo"}</div>`;
+}
+
+/* ---------- sincronizar con un repo privado de GitHub ---------- */
+const b64 = s => { const u = new TextEncoder().encode(s); let bin = ""; for (let i = 0; i < u.length; i += 0x8000) bin += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(bin); };
+const sync = {
+  dirty:false, busy:false,
+  tok(){ try { return localStorage.getItem(KEY+"-gh") || ""; } catch { return ""; } },
+  repo(){ try { return localStorage.getItem(KEY+"-ghrepo") || "orduzchiqui-sudo/cuerpo-ares-datos"; } catch { return "orduzchiqui-sudo/cuerpo-ares-datos"; } },
+  state(){ try { return JSON.parse(localStorage.getItem(KEY+"-sync") || "{}"); } catch { return {}; } },
+  mark(k){ const s = this.state(); s[k] = Date.now(); try { localStorage.setItem(KEY+"-sync", JSON.stringify(s)); } catch {} },
+  req(path, opt = {}){
+    return fetch(`https://api.github.com/repos/${this.repo()}/contents/${path}`, {method: opt.method || "GET", cache:"no-store", keepalive: !!opt.keepalive,
+      headers:{Authorization:`Bearer ${this.tok()}`, Accept: opt.raw ? "application/vnd.github.raw+json" : "application/vnd.github+json", "X-GitHub-Api-Version":"2022-11-28", ...(opt.body ? {"Content-Type":"application/json"} : {})},
+      body: opt.body});
+  },
+  fail(r){ return {code: r.status === 401 || r.status === 403 || r.status === 404 ? "bad_tok" : "net"}; },
+  async push(){
+    const g = await this.req("datos.json");
+    if (!g.ok && g.status !== 404) throw this.fail(g);
+    const sha = g.ok ? (await g.json()).sha : undefined;
+    const body = JSON.stringify({app:"cuerpo-ares", at:new Date().toISOString(), data:cache});
+    const p = await this.req("datos.json", {method:"PUT", body: JSON.stringify({message:`datos ${iso(new Date())}`, content: b64(body), ...(sha ? {sha} : {})})});
+    if (!p.ok) throw this.fail(p);
+    this.dirty = false; this.mark("push");
+  },
+  async pull(){
+    const r = await this.req("coach.json", {raw:true});
+    if (r.status === 404) return false;
+    if (!r.ok) throw this.fail(r);
+    this.mark("pull");
+    return setCoach(await r.json(), "repo");
+  },
+  async run(){
+    if (!this.tok() || this.busy || !navigator.onLine) return;
+    this.busy = true;
+    try { await this.pull(); await this.push(); return true; } finally { this.busy = false; }
+  },
+  // al abrir: trae el plan y sube los datos si pasaron más de 20 min
+  auto(){
+    if (!this.tok()) return;
+    const s = this.state();
+    if (!s.push || Date.now() - s.push > 20*60000) this.run().then(() => renderAres(targets())).catch(() => {});
+  }
+};
+// al salir de la app sube lo nuevo (si pasaron 5 min desde la última vez)
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState !== "hidden" || !sync.dirty || !sync.tok()) return;
+  const s = sync.state(); if (s.push && Date.now() - s.push < 5*60000) return;
+  sync.run().catch(() => {});
+});
+const syncErr = e => ({bad_tok:"GitHub rechazó la llave. Revisa que tenga acceso a cuerpo-ares-datos con Contents: Read and write.", bad_plan:"Ese texto no es un plan de Ares.", net:"No hubo conexión con GitHub. Intenta en un rato."}[e?.code] || "No se pudo sincronizar.");
+function renderSync(){
+  const s = sync.state();
+  $("syncMsg").innerHTML = sync.tok() ? `<span class="ok">Conectado.</span> Datos subidos ${ago(s.push)} · plan revisado ${ago(s.pull)}` : "Sin conectar: Ares no ve tus datos hasta que pegues la llave.";
+  $("ghIn").placeholder = sync.tok() ? "Llave guardada · pega otra para cambiarla" : "Pega la llave de GitHub";
+}
+$("ghForm").onsubmit = async e => {
+  e.preventDefault();
+  const k = $("ghIn").value.trim(); if (!k) return;
+  try { localStorage.setItem(KEY+"-gh", k); } catch {}
+  $("ghIn").value = ""; $("syncMsg").textContent = "Probando la llave…";
+  try { await sync.run(); renderSync(); toast("Conectado con Ares ✓"); }
+  catch (err) { if (err.code === "bad_tok") { try { localStorage.removeItem(KEY+"-gh"); } catch {} } $("syncMsg").innerHTML = `<span class="bad">${syncErr(err)}</span>`; }
+};
+$("syncBtn").onclick = async () => {
+  if (!sync.tok()) { $("syncMsg").textContent = "Primero pega la llave de GitHub."; return; }
+  $("syncMsg").textContent = "Sincronizando…";
+  try { await sync.run(); renderSync(); toast("Listo: Ares ya tiene tus datos"); }
+  catch (err) { $("syncMsg").innerHTML = `<span class="bad">${syncErr(err)}</span>`; }
+};
+$("planPasteBtn").onclick = () => {
+  const ta = $("planIn");
+  if (ta.hidden || !ta.value.trim()) { ta.hidden = false; ta.value = ""; ta.focus(); $("syncMsg").textContent = "Pega el plan en el cuadro y vuelve a tocar el botón."; return; }
+  try { setCoach(JSON.parse(ta.value)); ta.hidden = true; ta.value = ""; $("syncMsg").innerHTML = `<span class="ok">Plan de Ares cargado. Míralo en Hoy.</span>`; }
+  catch (err) { $("syncMsg").innerHTML = `<span class="bad">${syncErr(err?.code ? err : {code:"bad_plan"})}</span>`; }
+};
+
+/* ---------- respirar ---------- */
+const PATS = {calma:[["Inhala",4],["Exhala",6]], dormir:[["Inhala",4],["Sostén",7],["Exhala",8]], cuadrada:[["Inhala",4],["Sostén",4],["Exhala",4],["Sostén",4]]};
+let bMin = 5, bPat = "calma", bRun = null;
+const mmss = ms => { const s = Math.ceil(ms/1000); return `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`; };
+function renderRelax(d){
+  const n = d.relax || 0;
+  $("relaxN").innerHTML = n ? `<b class="${n >= 5 ? "ok" : "warn"}">${n} min</b> hoy` : "Todavía no hoy";
+}
+function openBreath(){ $("breath").hidden = false; document.body.style.overflow = "hidden"; bStop(false); }
+function bStop(log){
+  if (bRun) {
+    clearTimeout(bRun.t); clearInterval(bRun.iv);
+    const min = Math.floor((Date.now() - bRun.start)/60000);
+    if (log && min >= 1) { const d = getDay(); d.relax = (d.relax || 0) + min; toast(`+${min} min de calma 🌙`); touchDay(); }
+  }
+  bRun = null;
+  $("bTxt").textContent = "Listo"; $("bTime").textContent = mmss(bMin*60000); $("bGo").textContent = "Empezar";
+  const c = $("bCirc"); c.style.transition = "transform .6s ease"; c.style.transform = "scale(.6)";
+}
+function bStep(){
+  const P = PATS[bPat], [lbl, s] = P[bRun.i++ % P.length], c = $("bCirc");
+  $("bTxt").textContent = lbl;
+  c.style.transition = `transform ${s}s ease-in-out`;
+  if (lbl === "Inhala") c.style.transform = "scale(1)"; else if (lbl === "Exhala") c.style.transform = "scale(.6)";
+  bRun.t = setTimeout(bStep, s*1000);
+}
+$("relaxBtn").onclick = openBreath;
+$("bGo").onclick = () => {
+  if (bRun) { bStop(true); return; }
+  bRun = {i:0, start: Date.now(), end: Date.now() + bMin*60000};
+  $("bGo").textContent = "Terminar";
+  bRun.iv = setInterval(() => { const left = bRun.end - Date.now(); $("bTime").textContent = mmss(Math.max(0, left)); if (left <= 0) bStop(true); }, 250);
+  bStep();
+};
+$("bClose").onclick = () => { bStop(true); $("breath").hidden = true; document.body.style.overflow = ""; };
+$("bMins").onclick = e => { const b = e.target.closest("[data-m]"); if (!b || bRun) return; bMin = +b.dataset.m; $("bMins").querySelectorAll("[data-m]").forEach(x => x.setAttribute("aria-pressed", x === b)); bStop(false); };
+$("bPat").onclick = e => { const b = e.target.closest("[data-p]"); if (!b || bRun) return; bPat = b.dataset.p; $("bPat").querySelectorAll("[data-p]").forEach(x => x.setAttribute("aria-pressed", x === b)); };
+
 /* ---------- respaldo ---------- */
 $("exportBtn").onclick = async () => {
   const txt = JSON.stringify(cache);
@@ -1511,6 +1742,7 @@ function planTasks(d, id = cur){
     {k:"scr", t:"Sin pantallas 1 h antes de dormir", s:"Más melatonina y sueño profundo", done: d.screensOff === true, set: x => x.screensOff = !x.screensOff},
     {k:"mood", t:"Anotar energía, ánimo y ansiedad", s:"Un toque del 1 al 5", done: !!(d.energy && d.mood && d.anxiety), go:"cuerpo"},
     {k:"coach", t:"Pedir consejo al entrenador", s:"Al final del día", done: !!d.advice, go:"coach"},
+    ...coachTasks(d, id),
   ].filter(Boolean);
 }
 // días seguidos cumpliendo una tarea; si hoy aún no, cuenta desde ayer para no "romper" la racha antes de tiempo
@@ -1557,6 +1789,7 @@ $("plan").onclick = e => {
   if (x.go === "foto") { if (ai.key()) $("photo").click(); else show("comida"); return; }
   if (x.go === "weigh") { $("goalCard").scrollIntoView({behavior:"smooth", block:"center"}); return; }
   if (x.go === "coach") { $("coachBtn").scrollIntoView({behavior:"smooth", block:"center"}); return; }
+  if (x.go === "relax") { openBreath(); return; }
   show(x.go);
 };
 
@@ -1622,7 +1855,7 @@ function renderGoal(t){
     <div class="gblock"><div class="hd"><span>⚖️ Pesaje semanal</span>${daySel}</div>${head}
       ${showForm ? `<div class="wform"><input type="number" id="wkInput" min="30" max="300" step="0.1" inputmode="decimal" placeholder="Tu peso en kg" value="${d.weight || ""}" aria-label="Peso en kilos"><button class="btn-main" data-wsave>Guardar</button></div>` : `<button class="btn-ghost small" data-wopen>${d.weight ? "Corregir el peso" : "Pesarme hoy de todas formas"}</button>`}
       ${list ? `<div class="wlist">${list}</div>` : ""}</div>
-    <div class="gblock"><div class="hd"><span>📈 Ajuste recomendado</span></div><p>${fix.msg}</p>${fix.delta ? `<button class="btn-ghost" data-pace="${fix.delta}">${fix.delta > 0 ? "Subir" : "Bajar"} mi meta ${Math.abs(fix.delta)} kcal</button>` : ""}</div>`;
+    <div class="gblock"><div class="hd"><span>📈 Ajuste recomendado</span></div><p>${coachOn()?.metas?.ajuste != null || coachOn()?.metas?.kcal ? "Tus calorías las fija el Plan de Ares y él las mueve con tus pesajes. Este cálculo queda de referencia: " + fix.msg : fix.msg}</p>${fix.delta && !coachOn()?.metas ? `<button class="btn-ghost" data-pace="${fix.delta}">${fix.delta > 0 ? "Subir" : "Bajar"} mi meta ${Math.abs(fix.delta)} kcal</button>` : ""}</div>`;
 }
 // kg por semana con los pesajes de las últimas 5 semanas (mínimos cuadrados); cuenta desde el último cambio de modo o de ajuste
 function weightTrend(){
